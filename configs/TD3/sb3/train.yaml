@@ -1,0 +1,11 @@
+mode: train
+algorithm: TD3
+implementation: sb3  # Change to "custom" if using a custom algorithm
+env: "Hockey-v0"
+total_timesteps: 1000000
+eval_interval: 5000
+batch_size: 256
+learning_rate: 0.001
+gamma: 0.99
+policy: "MlpPolicy"
+log_dir: "logs/TD3/sb3/train"

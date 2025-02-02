@@ -1,0 +1,11 @@
+mode: train
+algorithm: SAC
+implementation: custom  # Options: "custom", "sb3", "other"
+env: "Hockey-v0"
+seed: 42
+total_timesteps: 1000000
+eval_interval: 5000
+batch_size: 256
+learning_rate: 0.001
+gamma: 0.99
+log_dir: "logs/SAC/custom/train"

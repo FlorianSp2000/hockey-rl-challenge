@@ -2,10 +2,11 @@
 
 ## Quick Links 🔗
 - [Hockey Environment Repository](https://github.com/martius-lab/laser-hockey-env)
-- [Competition Server](http://comprl.cs.uni-tuebingen.de)
+- [Competition Server Repository](https://github.com/martius-lab/comprl/)
 - [Client Code Repository](https://github.com/martius-lab/comprl-hockey-agent)
 - [Gymnasium Documentation](https://gymnasium.farama.org/)
-- [Competition Server](https://github.com/martius-lab/comprl/)
+- [Competition Server](http://comprl.cs.uni-tuebingen.de)
+
 
 ## Project Overview 🎯
 This repository contains the implementation of a Reinforcement Learning agent for a simulated hockey game. The project is part of the RL course curriculum, focusing on developing and evaluating different RL algorithms.
@@ -38,6 +39,12 @@ env = gym.make('LaserHockey-v0', mode='NORMAL')
 
 ### Using the TCML Cluster
 
+Set up a .env file and set TCML_USERNAME and TCML_PASSWORD. Afterwards, to connect to the TCML cluster using ssh run 
+
+```bash
+TCML.bat
+```
+
 Building the container:
 
 ```bash
@@ -50,4 +57,17 @@ Running Scripts in the Container:
 singularity run /path/to/container.sif python3 ./my_script.py
 ```
 
-- Try out **Hockeyenv.ipynb** for environment exploration
+#### How to start a Job on the TCML Cluster
+
+Use sbatch command to queue a job to the cluster:
+
+```bash
+sbatch train.sbatch
+```
+
+To see status of jobs use command *squeue*. To cancel a job use command *scancel <jobid>*
+
+The output can be found in job.JOBNUMBER.out and the errors in job.JOBNUMBER.err which will be created in the same directory as the .sbatch file.
+
+- Try out **Hockeyenv.ipynb**  from the [env repository](https://github.com/martius-lab/hockey-env) for environment exploration
+
