@@ -3,6 +3,8 @@ import os
 import yaml
 import datetime
 from torch.utils.tensorboard import SummaryWriter
+from stable_baselines3.common.logger import Logger as SB3Logger
+
 
 class Logger:
     def __init__(self, base_log_dir, config):
@@ -11,7 +13,11 @@ class Logger:
         self.log_dir = os.path.join(base_log_dir, self.run_id)
         os.makedirs(self.log_dir, exist_ok=True)
 
+        # Create a TensorBoard writer
         self.writer = SummaryWriter(self.log_dir)
+
+        # Create an SB3 logger that writes to the same directory
+        # self.sb3_logger = SB3Logger(folder=self.log_dir, output_formats=['tensorboard', 'stdout'])
         
         # Save HPs to YAML and TensorBoard
         self.save_hyperparams(config)

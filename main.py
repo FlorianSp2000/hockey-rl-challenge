@@ -9,11 +9,13 @@ from src.utils.config_loader import load_config
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, required=True, help="Path to config file")
+    parser.add_argument("--opponent", type=str, choices=["weak", "strong"], default="weak", help="Opponent type")
     # parser.add_argument("--load_model", type=str, help="Path to trained model (optional)")
     args = parser.parse_args()
 
     config = load_config(args.config)
-    logger = Logger(config)
+    base_log_dir = config["log_dir"]
+    logger = Logger(base_log_dir, config)
 
     mode = config["mode"]
     if mode == "train":

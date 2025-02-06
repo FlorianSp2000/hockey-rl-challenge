@@ -27,15 +27,10 @@ The project uses a custom hockey environment built on the Gymnasium API (formerl
 
 ### Installation
 ```bash
-pip install laser-hockey-env
+pip install -r requirements.txt
 ```
 
-```bash
-import gymnasium as gym
-import laser_hockey_env
-
-env = gym.make('LaserHockey-v0', mode='NORMAL')
-```
+- Try out **Hockeyenv.ipynb**  from the [env repository](https://github.com/martius-lab/hockey-env) for environment exploration
 
 ### Using the TCML Cluster
 
@@ -69,5 +64,21 @@ To see status of jobs use command *squeue*. To cancel a job use command *scancel
 
 The output can be found in job.JOBNUMBER.out and the errors in job.JOBNUMBER.err which will be created in the same directory as the .sbatch file.
 
-- Try out **Hockeyenv.ipynb**  from the [env repository](https://github.com/martius-lab/hockey-env) for environment exploration
 
+#### Run Model Training and Evaluation
+
+Run the **main.py** and specify the **config.yaml** that contains the desired method and mode (training, evaluation).
+
+```bash
+python3 ./main.py --config ./configs/TD3/sb3/train.yaml --opponent weak
+```
+
+To see the results in tensorboard:
+
+```bash
+tensorboard --logdir=./logs/TD3/sb3/train
+```
+
+### Hyperparameter Tuning
+- [Smooth Exploration for RL](https://arxiv.org/pdf/2005.05719) contains optimal HPs on Pybullet envs for PPO, SAC, TD3 with gSDE
+- [rl-zoo](https://github.com/DLR-RM/rl-baselines3-zoo/blob/master/rl_zoo3/hyperparams_opt.py) contains code to conduct HP search with optuna

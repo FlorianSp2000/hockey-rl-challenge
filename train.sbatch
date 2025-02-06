@@ -1,6 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=JobName
-# give it any name you want
+#SBATCH --job-name=ta_train
 
 #SBATCH --cpus-per-task=4
 # max 24 per node
@@ -15,8 +14,8 @@
 # how many gpus to use
 # each node has 4 gpus
 
-#SBATCH --time=10:00
-# job length: the job will run either until completion or until this timer runs out
+#SBATCH --time=23:59:59
+# job length: the job will run either until completion or until this timer runs out; "hours:minutes:seconds", "days-hours", "days-hours:minutes"
 
 #SBATCH --error=job.%J.err
 # %J is the job ID, errors will be written to this file
@@ -27,5 +26,6 @@
 #SBATCH --mail-type=ALL
 # write a mail if a job begins, ends, fails, gets requeued or stages out
 # options: NONE, BEGIN, END, FAIL, REQUEUE, ALL
-#SBATCH --mail-user=*****@uni-tuebingen.de
-# your email
+#SBATCH --mail-user=florian.sprick@uni-tuebingen.de
+
+singularity exec --nv ~/container.sif python3 ./main.py --config ./configs/TD3/sb3/train.yaml --opponent weak
