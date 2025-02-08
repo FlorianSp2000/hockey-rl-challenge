@@ -23,7 +23,7 @@ import hockey.hockey_env as h_env
 
 def run(config, logger):
     num_cpus, num_gpus = print_system_info()
-    # synchronize custom logger with SB3 logger
+    # synchronize custom logger with SB3 logger TODO: still necessary?
     config["tensorboard_log"] = logger.log_dir
 
     # Load opponent mode from config
@@ -50,7 +50,7 @@ def run(config, logger):
     training_callback = CustomTensorboardCallback(n_envs=num_cpus-config['n_eval_envs'])
     eval_callback = EvalCallback(
         eval_env=eval_env,
-        eval_freq=config["eval_interval"],
+        eval_freq=config['mode']["eval_interval"],
         n_eval_episodes=5, # default: 5
         log_path=logger.log_dir,
         deterministic=True,
@@ -60,7 +60,7 @@ def run(config, logger):
     start_time = time.time()
     print("### Starting Training ###")
     agent.learn(
-        total_timesteps=config["total_timesteps"],
+        total_timesteps=config['mode']["total_timesteps"],
         callback=[training_callback, eval_callback],
         tb_log_name="",
     )

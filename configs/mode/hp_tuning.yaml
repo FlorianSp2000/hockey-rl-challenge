@@ -1,0 +1,7 @@
+name: hp_tuning
+sweep_params:
+  learning_rate:
+    range: [0.0001, 0.001]
+    type: log
+  batch_size:
+    values: [128, 256, 512]

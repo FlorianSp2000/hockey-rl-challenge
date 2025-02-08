@@ -5,9 +5,11 @@ from stable_baselines3 import TD3, SAC, PPO
 
 class AlgoWrapper:
     def __init__(self, config):
-        self.algorithm = config["algorithm"]
+        self.algorithm = config["algorithm"]["name"]
         self.implementation = config["implementation"]
-        self.config = config
+        self.config = config["algorithm"]["params"]
+        self.tensorboard_log = config["tensorboard_log"]
+        self.parallelize = config["parallelize"]
 
     def get_model(self, env):
         if self.implementation == "sb3":
@@ -18,7 +20,7 @@ class AlgoWrapper:
             raise ValueError(f"Unknown implementation: {self.implementation}")
 
     def _get_sb3_model(self, env):
-        policy = self.config.get("policy", "MlpPolicy")  # Defaults to MlpPolicy
+        policy = self.config['policy']
         if self.algorithm == "TD3":
             return TD3(
                 policy,
@@ -26,13 +28,13 @@ class AlgoWrapper:
                 verbose=1,
                 batch_size=self.config["batch_size"],
                 learning_rate=self.config["learning_rate"],
-                tensorboard_log=self.config["tensorboard_log"],
+                tensorboard_log=self.tensorboard_log,
                 gamma=self.config["gamma"],
-                policy_kwargs=self.config.get("policy_kwargs", {}),
+                policy_kwargs=self.config["policy_kwargs"],
                 learning_starts=self.config["learning_starts"],
                 gradient_steps=(
                     -1
-                    if self.config["parallelize"] and not self.config["gradient_steps"]
+                    if self.parallelize and not self.config["gradient_steps"]
                     else (
                         self.config["gradient_steps"]
                         if self.config["gradient_steps"]
@@ -47,10 +49,10 @@ class AlgoWrapper:
                 verbose=1,
                 batch_size=self.config["batch_size"],
                 learning_rate=self.config["learning_rate"],
-                tensorboard_log=self.config["tensorboard_log"],
+                tensorboard_log=self.tensorboard_log,
                 gradient_steps=(
                     -1
-                    if self.config["parallelize"] and not self.config["gradient_steps"]
+                    if self.parallelize and not self.config["gradient_steps"]
                     else (
                         self.config["gradient_steps"]
                         if self.config["gradient_steps"]
@@ -65,9 +67,9 @@ class AlgoWrapper:
                 verbose=1,
                 batch_size=self.config["batch_size"],
                 learning_rate=self.config["learning_rate"],
-                tensorboard_log=self.config["tensorboard_log"],
+                tensorboard_log=self.tensorboard_log,
                 n_steps=self.config["n_steps"],
-                policy_kwargs=self.config.get("policy_kwargs", {}),
+                policy_kwargs=self.config["policy_kwargs"],
             )
         else:
             raise ValueError(f"SB3 does not support algorithm: {self.algorithm}")

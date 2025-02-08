@@ -10,8 +10,8 @@ class CustomTensorboardCallback(BaseCallback):
         super().__init__(verbose)
         self.n_envs = n_envs
         # print(f"n_envs: {n_envs}")
-        self.episode_rewards = [[] for _ in range(n_envs)]  # Track rewards per env
-        self.episode_lengths = [[] for _ in range(n_envs)]  # Track lengths per env
+        # self.episode_rewards = [[] for _ in range(n_envs)]  # Track rewards per env
+        # self.episode_lengths = [[] for _ in range(n_envs)]  # Track lengths per env
         self.all_rewards = []  # Stores completed episode rewards
         self.all_lengths = []  # Stores completed episode lengths
         self.wins = 0
@@ -72,6 +72,7 @@ class CustomTensorboardCallback(BaseCallback):
             self.logger.record("episode/draw_rate", self.draws / (self.wins + self.draws + self.losses))
             self.logger.record("episode/loss_rate", self.losses / (self.wins + self.draws + self.losses))
             self.logger.record("episode/win_rate", self.wins / (self.wins + self.draws + self.losses))
+            self.logger.record("time/no_total_episodes", len(self.all_rewards))
 
             # Compute mean reward components over all environments
             self.logger.record("reward/closeness_to_puck", np.mean(self.current_episode_reward_closeness))

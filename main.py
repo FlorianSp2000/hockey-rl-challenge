@@ -1,23 +1,23 @@
 # src/main.py
-import argparse
-import yaml
 from src.utils.logger import Logger
 from src import train, test, selfplay, hp_tuning
 from src.utils.config_loader import load_config
 
+import hydra
+from omegaconf import DictConfig, OmegaConf
+from hydra.core.hydra_config import HydraConfig
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, required=True, help="Path to config file")
-    parser.add_argument("--opponent", type=str, choices=["weak", "strong"], default="weak", help="Opponent type")
-    # parser.add_argument("--load_model", type=str, help="Path to trained model (optional)")
-    args = parser.parse_args()
 
-    config = load_config(args.config)
-    base_log_dir = config["log_dir"]
-    logger = Logger(base_log_dir, config)
+@hydra.main(version_base=None, config_path="configs", config_name="config")
+def main(cfg: DictConfig):
+    # Merge Hydra config with argparse arguments
+    log_dir_datetimed = HydraConfig.get().run.dir
+    logger = Logger(log_dir_datetimed, cfg)
 
-    mode = config["mode"]
+    mode = cfg.mode.name
+    config = OmegaConf.to_container(cfg, resolve=True)
+    print(f"Config: {config}")
+
     if mode == "train":
         train.run(config, logger)
     elif mode == "test":
@@ -29,4 +29,8 @@ if __name__ == "__main__":
     else:
         raise ValueError(f"Unknown mode: {mode}")
 
-    # python main.py --config configs/SAC/train.yaml
+
+if __name__ == "__main__":
+    main()
+
+    # python main.py mode=train n_eval_envs=1 parallelize=False

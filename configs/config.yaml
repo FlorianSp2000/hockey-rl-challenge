@@ -1,0 +1,22 @@
+# Prepare moving to Hydra for config management and composition
+# config/config.yaml
+defaults:
+  - _self_
+  - algorithm: sac
+  - mode: train
+
+# Common parameters
+env: Hockey-v1
+implementation: sb3
+seed: 42
+n_eval_envs: 2
+parallelize: True
+opponent: weak
+# gamma: 0.99
+# policy: MlpPolicy
+# learning_starts: 100
+# policy_kwargs: {}
+
+hydra:
+  run:
+    dir: ${mode.log_dir}/run_${now:%Y-%m-%d_%H-%M-%S}

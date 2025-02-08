@@ -1,0 +1,12 @@
+name: PPO
+params:
+  batch_size: 256
+  gamma: 0.99
+  learning_rate: 0.0003
+  learning_starts: 100
+  policy_kwargs: {}
+  implementation: sb3  # Options: "custom", "sb3", "other"
+  policy: "MlpPolicy" # only for sb3
+  eval_interval: 5000
+  policy_kwargs: {}
+  n_steps: 2048

@@ -1,9 +1,0 @@
-mode: hp_tuning
-algorithm: SAC
-implementation: sb3
-env: "Hockey-v0"
-hp_tuning:
-  batch_size: [128, 256, 512]
-  learning_rate_min: 1e-5
-  learning_rate_max: 1e-2
-  n_trials: 20

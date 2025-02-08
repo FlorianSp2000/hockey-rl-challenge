@@ -2,17 +2,14 @@
 import os
 import torch
 import multiprocessing
-import yaml
 import datetime
 from torch.utils.tensorboard import SummaryWriter
 from stable_baselines3.common.logger import Logger as SB3Logger
-
+from omegaconf import DictConfig, OmegaConf
 
 class Logger:
-    def __init__(self, base_log_dir, config):
-        self.run_id = self._generate_run_id(base_log_dir)
-        self.base_dir = base_log_dir
-        self.log_dir = os.path.join(base_log_dir, self.run_id)
+    def __init__(self, log_dir_datetimed, config: DictConfig):
+        self.log_dir = log_dir_datetimed
         os.makedirs(self.log_dir, exist_ok=True)
 
         # Create a TensorBoard writer
@@ -30,19 +27,20 @@ class Logger:
 
     def log_hyperparams(self, config):
         """Logs all hyperparameters to TensorBoard"""
-        for key, value in config.items():
+        flat_config = OmegaConf.to_container(config, resolve=True)
+        for key, value in flat_config.items():
             if isinstance(value, (int, float, str, bool)):
                 self.writer.add_text(f"HPs/{key}", str(value), 0)
 
     def save_hyperparams(self, config):
         """Saves HPs to a file for future reference"""
         with open(os.path.join(self.log_dir, "hyperparams.yaml"), "w") as f:
-            yaml.dump(config, f)
+            OmegaConf.save(config, f)
 
-    def _generate_run_id(self, base_log_dir):
-        """Generates a unique run ID (timestamped) to avoid overwriting logs."""
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        return f"run_{timestamp}"
+    # def _generate_run_id(self, base_log_dir):
+    #     """Generates a unique run ID (timestamped) to avoid overwriting logs."""
+    #     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    #     return f"run_{timestamp}"
 
     def close(self):
         self.writer.close()
