@@ -28,4 +28,19 @@
 # options: NONE, BEGIN, END, FAIL, REQUEUE, ALL
 #SBATCH --mail-user=florian.sprick@uni-tuebingen.de
 
-singularity run  ~/container.sif python3 ./main.py algorithm=sac mode=train
+singularity run ~/container.sif python3 ./main.py algorithm=sac mode=train \
+  algorithm.params.learning_rate=0.00073 \
+  algorithm.params.gamma=0.98 \
+  algorithm.params.buffer_size=300000 \
+  algorithm.params.net_arch.pi=[400,300] \
+  algorithm.params.net_arch.qf=[400,300] \
+  algorithm.params.batch_size=256 \
+  algorithm.params.activation_fn=ReLU \
+  algorithm.params.tau=0.02 \
+  algorithm.params.train_freq=[1,episode] \
+  algorithm.params.learning_starts=10000 \
+  algorithm.params.use_sde=true \
+  algorithm.params.log_std_init=-3 \
+  algorithm.params.sde_sample_freq=8 \
+  mode.total_timesteps=5000000
+
