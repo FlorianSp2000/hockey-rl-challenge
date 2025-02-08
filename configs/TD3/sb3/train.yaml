@@ -1,11 +1,14 @@
-mode: train
 algorithm: TD3
-implementation: sb3  # Change to "custom" if using a custom algorithm
-env: "Hockey-v0"
-total_timesteps: 1000000
-eval_interval: 5000
 batch_size: 256
-learning_rate: 0.001
+env: Hockey-v0
+eval_interval: 5000
 gamma: 0.99
-policy: "MlpPolicy"
-log_dir: "logs/TD3/sb3/train"
+implementation: sb3
+learning_rate: 0.001
+log_dir: logs/TD3/sb3/train
+mode: train
+policy: MlpPolicy
+tensorboard_log: logs/TD3/sb3/train
+total_timesteps: 1000000
+policy_kwargs: {}
+learning_starts: 100

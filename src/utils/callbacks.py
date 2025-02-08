@@ -6,65 +6,77 @@ from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.vec_env import DummyVecEnv, VecEnv, sync_envs_normalization
 
 class CustomTensorboardCallback(BaseCallback):
-    def __init__(self, verbose=0):
+    def __init__(self, n_envs=1, verbose=0):
         super().__init__(verbose)
-        self.episode_rewards = []
-        self.episode_lengths = []
+        self.n_envs = n_envs
+        # print(f"n_envs: {n_envs}")
+        self.episode_rewards = [[] for _ in range(n_envs)]  # Track rewards per env
+        self.episode_lengths = [[] for _ in range(n_envs)]  # Track lengths per env
+        self.all_rewards = []  # Stores completed episode rewards
+        self.all_lengths = []  # Stores completed episode lengths
         self.wins = 0
         self.draws = 0
         self.losses = 0
-        # self.custom_logger = custom_logger
         self.reset_episode_rewards()
 
     def reset_episode_rewards(self):
-        self.current_episode_reward_closeness = 0
-        self.current_episode_reward_touch = 0
-        self.current_episode_reward_direction = 0
+        self.current_episode_reward_closeness = [0] * self.n_envs
+        self.current_episode_reward_touch = [0] * self.n_envs
+        self.current_episode_reward_direction = [0] * self.n_envs
 
     def _on_step(self) -> bool:
-        info = self.locals['infos'][0]
-        
-        # Accumulate reward components
-        self.current_episode_reward_closeness += info['reward_closeness_to_puck']
-        self.current_episode_reward_touch += info['reward_touch_puck']
-        self.current_episode_reward_direction += info['reward_puck_direction']
+        infos = self.locals['infos']
+        dones = self.locals['dones']
+        # print(f"len(infos): {len(infos)}")
+        episode_finished = False  # Flag to track if at least one environment finished
 
-        
-        if self.locals['dones'][0]:
-            info = self.locals['infos'][0]
-            episode_info = info['episode']
-            winner = info['winner']
+        for i in range(min(self.n_envs, len(infos))):
+            info = infos[i]
+            # Accumulate reward components per environment
+            self.current_episode_reward_closeness[i] += info['reward_closeness_to_puck']
+            self.current_episode_reward_touch[i] += info['reward_touch_puck']
+            self.current_episode_reward_direction[i] += info['reward_puck_direction']
 
-            # Track episode statistics
-            self.episode_rewards.append(episode_info['r'])
-            self.episode_lengths.append(episode_info['l'])
+            if dones[i]:  # If episode ends in this environment
+                episode_finished = True  # Mark that at least one episode ended
 
-            # Track game outcome
-            if winner == 1:
-                self.wins += 1
-            elif winner == 0:
-                self.draws += 1
-            else:
-                self.losses += 1
+                episode_info = info['episode']
+                winner = info['winner']
 
-            # print the number of episodes
-            assert len(self.episode_rewards) == (self.wins + self.draws + self.losses)
-            # Log episode information
-            self.logger.record("episode/mean_reward", np.mean(self.episode_rewards))
-            self.logger.record("episode/mean_length", np.mean(self.episode_lengths))
+                # Store completed episode stats
+                self.all_rewards.append(episode_info['r'])
+                self.all_lengths.append(episode_info['l'])
+
+                # Track game outcome
+                if winner == 1:
+                    self.wins += 1
+                elif winner == 0:
+                    self.draws += 1
+                else:
+                    self.losses += 1
+
+                # Reset accumulated rewards for this environment
+                self.current_episode_reward_closeness[i] = 0
+                self.current_episode_reward_touch[i] = 0
+                self.current_episode_reward_direction[i] = 0
+
+        # Log only if at least one episode finished
+        if episode_finished:
+            # Ensure every completed episode has a win/loss/draw
+            assert len(self.all_rewards) == (self.wins + self.draws + self.losses), \
+                f"Mismatch: Episodes recorded ({len(self.all_rewards)}) != Wins ({self.wins}) + Draws ({self.draws}) + Losses ({self.losses})"
+
+            # Compute statistics over completed episodes
+            self.logger.record("episode/mean_reward", np.mean(self.all_rewards))
+            self.logger.record("episode/mean_length", np.mean(self.all_lengths))
             self.logger.record("episode/draw_rate", self.draws / (self.wins + self.draws + self.losses))
             self.logger.record("episode/loss_rate", self.losses / (self.wins + self.draws + self.losses))
             self.logger.record("episode/win_rate", self.wins / (self.wins + self.draws + self.losses))
 
-            # Log accumulated reward components
-            self.logger.record("reward/closeness_to_puck", self.current_episode_reward_closeness)
-            self.logger.record("reward/touch_puck", self.current_episode_reward_touch)
-            self.logger.record("reward/puck_direction", self.current_episode_reward_direction)
-            
-            # self.logger.dump(step=self.num_timesteps)
-
-            # Reset accumulated rewards for next episode
-            self.reset_episode_rewards()
+            # Compute mean reward components over all environments
+            self.logger.record("reward/closeness_to_puck", np.mean(self.current_episode_reward_closeness))
+            self.logger.record("reward/touch_puck", np.mean(self.current_episode_reward_touch))
+            self.logger.record("reward/puck_direction", np.mean(self.current_episode_reward_direction))
 
         return True
 

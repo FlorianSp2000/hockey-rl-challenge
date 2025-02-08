@@ -30,6 +30,15 @@ class AlgoWrapper:
                 gamma=self.config["gamma"],
                 policy_kwargs=self.config.get("policy_kwargs", {}),
                 learning_starts=self.config["learning_starts"],
+                gradient_steps=(
+                    -1
+                    if self.config["parallelize"] and not self.config["gradient_steps"]
+                    else (
+                        self.config["gradient_steps"]
+                        if self.config["gradient_steps"]
+                        else 1
+                    )
+                ),  # See 1.6.4 https://stable-baselines3.readthedocs.io/_/downloads/en/master/pdf/
             )
         elif self.algorithm == "SAC":
             return SAC(
@@ -39,6 +48,15 @@ class AlgoWrapper:
                 batch_size=self.config["batch_size"],
                 learning_rate=self.config["learning_rate"],
                 tensorboard_log=self.config["tensorboard_log"],
+                gradient_steps=(
+                    -1
+                    if self.config["parallelize"] and not self.config["gradient_steps"]
+                    else (
+                        self.config["gradient_steps"]
+                        if self.config["gradient_steps"]
+                        else 1
+                    )
+                ),  # See 1.6.4 https://stable-baselines3.readthedocs.io/_/downloads/en/master/pdf/
             )
         elif self.algorithm == "PPO":
             return PPO(

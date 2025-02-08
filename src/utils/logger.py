@@ -1,5 +1,7 @@
 # src/utils/logger.py
 import os
+import torch
+import multiprocessing
 import yaml
 import datetime
 from torch.utils.tensorboard import SummaryWriter
@@ -23,7 +25,7 @@ class Logger:
         self.save_hyperparams(config)
         self.log_hyperparams(config)
 
-    def log_scalar(self, tag, value, step):
+    def log_scalar(self, tag, value, step=None):
         self.writer.add_scalar(tag, value, step)
 
     def log_hyperparams(self, config):
@@ -44,3 +46,15 @@ class Logger:
 
     def close(self):
         self.writer.close()
+
+def print_system_info():
+    num_cpus = multiprocessing.cpu_count()
+    num_gpus = torch.cuda.device_count()
+    
+    print(f"Available CPU cores: {num_cpus}")
+    print(f"Available GPUs: {num_gpus}")
+    
+    if num_gpus > 0:
+        for i in range(num_gpus):
+            print(f"🔹 GPU {i}: {torch.cuda.get_device_name(i)}")
+    return num_cpus, num_gpus

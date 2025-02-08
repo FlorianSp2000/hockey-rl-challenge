@@ -17,10 +17,10 @@
 #SBATCH --time=23:59:59
 # job length: the job will run either until completion or until this timer runs out; "hours:minutes:seconds", "days-hours", "days-hours:minutes"
 
-#SBATCH --error=job.%J.err
+#SBATCH --error=tcml_logs/job.%J.err
 # %J is the job ID, errors will be written to this file
 
-#SBATCH --output=job.%J.out
+#SBATCH --output=tcml_logs/job.%J.out
 # the output will be written in this file
 
 #SBATCH --mail-type=ALL
