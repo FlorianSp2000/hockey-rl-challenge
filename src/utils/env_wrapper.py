@@ -6,6 +6,8 @@ from stable_baselines3.common.vec_env import SubprocVecEnv, DummyVecEnv
 from stable_baselines3.common.utils import set_random_seed
 from stable_baselines3.common.monitor import Monitor
 
+ENV_TYPES = {'subproc': SubprocVecEnv, 'dummy': DummyVecEnv}
+
 class HockeySB3Wrapper(gym.Wrapper):
     def __init__(self, env, opponent_type="weak"):
         super().__init__(env) # Initialize the parent class with the environment
@@ -49,7 +51,7 @@ def make_env(seed, rank, opponent_type="weak"):
 
 def create_parallel_envs(config, n_envs, opponent_type="weak"):
     env_fns = [make_env(config["seed"], i, opponent_type) for i in range(n_envs - 1)]
-    env = SubprocVecEnv(env_fns)
+    env = ENV_TYPES[config["vector_type"]](env_fns)
     return env
 
 

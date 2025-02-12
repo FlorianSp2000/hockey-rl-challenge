@@ -1,3 +1,4 @@
+import os
 from typing import Optional, Union, Dict, Any
 import numpy as np
 from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
@@ -78,6 +79,31 @@ class CustomTensorboardCallback(BaseCallback):
             self.logger.record("reward/closeness_to_puck", np.mean(self.current_episode_reward_closeness))
             self.logger.record("reward/touch_puck", np.mean(self.current_episode_reward_touch))
             self.logger.record("reward/puck_direction", np.mean(self.current_episode_reward_direction))
+
+        return True
+
+
+
+class WinRateCheckpointCallback(BaseCallback):
+    def __init__(self, save_path, win_rate_threshold=0.8, verbose=0):
+        super().__init__(verbose)
+        self.save_path = save_path
+        self.win_rate_threshold = win_rate_threshold
+        self.last_saved_step = 0  # Prevent excessive saving
+        self.last_win_rate = 0
+
+    def _on_step(self) -> bool:
+
+        # Get logged statistics
+        win_rate = self.logger.name_to_value.get("episode/win_rate", None)
+        if win_rate is not None and win_rate >= self.win_rate_threshold and win_rate > self.last_win_rate:
+            if self.num_timesteps - self.last_saved_step > 50000:  # Avoid frequent saves
+                save_file = os.path.join(self.save_path, f"checkpoint_{self.num_timesteps}.zip")
+                self.model.save(save_file)
+                self.last_saved_step = self.num_timesteps
+                if self.verbose > 0:
+                    print(f"Checkpoint saved at step {self.num_timesteps} (Win rate: {win_rate:.2f})")
+                self.last_win_rate = win_rate
 
         return True
 

@@ -16,6 +16,7 @@ from src.utils.callbacks import (
     # CustomEvalCallback,
     # ComprehensiveTrainingCallback,
     CustomTensorboardCallback,
+    WinRateCheckpointCallback
 )
 from src.utils.env_wrapper import HockeySB3Wrapper, create_parallel_envs
 from src.utils.logger import print_system_info
@@ -56,12 +57,17 @@ def run(config, logger):
         deterministic=True,
         render=False,
     )
+    winrate_callback = WinRateCheckpointCallback(
+        save_path=f"{logger.log_dir}/checkpoints",
+        win_rate_threshold=config['win_rate_threshold_w_to_s'],
+        verbose=1
+    )
 
     start_time = time.time()
     print("### Starting Training ###")
     agent.learn(
         total_timesteps=config['mode']["total_timesteps"],
-        callback=[training_callback, eval_callback],
+        callback=[training_callback, eval_callback, winrate_callback],
         tb_log_name="",
     )
 
