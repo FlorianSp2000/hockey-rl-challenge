@@ -1,9 +1,3 @@
-# name: train
-# eval_interval: 5000
-# total_timesteps: 1000000
-# log_dir: logs/${algorithm}/sb3/${mode.name}
-# tensorboard_log: ${log_dir}
-
 name: train
 eval_interval: 5000
 total_timesteps: 1000000

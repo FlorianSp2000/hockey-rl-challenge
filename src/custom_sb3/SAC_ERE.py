@@ -37,10 +37,15 @@ class SACERE(SAC):
         ent_coef_losses, ent_coefs = [], []
         actor_losses, critic_losses = [], []
 
+        # print(f"self._total_timesteps {self._total_timesteps}")
         for gradient_step in range(gradient_steps):
             # Sample replay buffer
-            replay_data = self.replay_buffer.sample(batch_size, env=self._vec_normalize_env, k=gradient_step+1, K=gradient_steps)  # type: ignore[union-attr]
-
+            replay_data = self.replay_buffer.sample(batch_size, 
+                                                env=self._vec_normalize_env, 
+                                                k=gradient_step+1, 
+                                                K=gradient_steps, 
+                                                current_timestep=self.num_timesteps
+                                            )  # type: ignore[union-attr]
             # We need to sample because `log_std` may have changed between two gradient steps
             if self.use_sde:
                 self.actor.reset_noise()

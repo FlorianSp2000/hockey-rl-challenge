@@ -18,5 +18,7 @@ params:
   log_std_init: -3
   replay_buffer_class: "" # Choose between  ERE, PER or ERE+PER, if "" internally defaults to SB3 ReplayBuffer class
   replay_buffer_kwargs:
-    eta: 0.996 
+    eta0: 0.996 
+    etaT: 1
     cmin: 5000
+    total_timesteps: ${mode.total_timesteps}
