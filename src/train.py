@@ -35,8 +35,8 @@ def run(config, logger):
 
     if config["parallelize"]:
         print("Parallelizing environment")
-        env = create_parallel_envs(config, n_envs=num_cpus-config['n_eval_envs'], opponent_type="weak")
-        eval_env = create_parallel_envs(config, n_envs=config['n_eval_envs'], opponent_type="weak")
+        env = create_parallel_envs(config, n_envs=num_cpus-config['n_eval_envs'], opponent_type=opponent_type)
+        eval_env = create_parallel_envs(config, n_envs=config['n_eval_envs'], opponent_type=opponent_type)
         print("Parallelized environments created")
     else:
         env = HockeySB3Wrapper(h_env.HockeyEnv(), opponent_type)
