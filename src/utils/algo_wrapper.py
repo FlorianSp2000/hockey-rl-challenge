@@ -2,6 +2,9 @@
 import importlib
 from stable_baselines3 import TD3, SAC, PPO
 import torch.nn as nn
+from src.custom_sb3.replay_buffer import EREBuffer
+from src.custom_sb3.SAC_ERE import SACERE
+from stable_baselines3.common.buffers import ReplayBuffer
 
 class AlgoWrapper:
     def __init__(self, config):
@@ -11,7 +14,11 @@ class AlgoWrapper:
         self.tensorboard_log = config["tensorboard_log"]
         self.parallelize = config["parallelize"]
         self.activation_fns = {'ReLU': nn.ReLU, 'Tanh': nn.Tanh, 'LeakyReLU': nn.LeakyReLU}
+        self.replay_buffers = {'ERE': EREBuffer}
+        self.replay_buffer_kwargs = {'ERE': self.config["replay_buffer_kwargs"]}
+        print(f"self.replay_buffer_kwargs {self.replay_buffer_kwargs}")
         print(f"self.config: {self.config}")
+
     def get_model(self, env):
         if self.implementation == "sb3":
             return self._get_sb3_model(env)
@@ -53,31 +60,64 @@ class AlgoWrapper:
                 ),  # See 1.6.4 https://stable-baselines3.readthedocs.io/_/downloads/en/master/pdf/
             )
         elif self.algorithm == "SAC":
-            return SAC(
-                policy,
-                env,
-                verbose=1,
-                tensorboard_log=self.tensorboard_log,
-                policy_kwargs=policy_kwargs,
-                batch_size=self.config["batch_size"],
-                gamma=self.config["gamma"],
-                learning_rate=self.config["learning_rate"],
-                tau=self.config["tau"],
-                buffer_size=self.config["buffer_size"],
-                train_freq=tuple(self.config["train_freq"]) if isinstance(self.config["train_freq"], list) else self.config["train_freq"],
-                use_sde=self.config["use_sde"],
-                sde_sample_freq=self.config["sde_sample_freq"],
-                learning_starts=self.config["learning_starts"],
-                gradient_steps=(
-                    -1
-                    if self.parallelize and not self.config["gradient_steps"]
-                    else (
-                        self.config["gradient_steps"]
-                        if self.config["gradient_steps"]
-                        else 1
-                    )
-                ),  # See 1.6.4 https://stable-baselines3.readthedocs.io/_/downloads/en/master/pdf/
-            )
+            if self.config['replay_buffer_class'] in ['ERE', 'PER', 'ERE+PER']:
+                print("using SACERE")
+                return SACERE(
+                    policy,
+                    env,
+                    verbose=1,
+                    tensorboard_log=self.tensorboard_log,
+                    replay_buffer_class=self.replay_buffers.get(self.config["replay_buffer_class"], None),
+                    replay_buffer_kwargs=self.replay_buffer_kwargs.get(self.config["replay_buffer_class"], None),
+                    policy_kwargs=policy_kwargs,
+                    batch_size=self.config["batch_size"],
+                    gamma=self.config["gamma"],
+                    learning_rate=self.config["learning_rate"],
+                    tau=self.config["tau"],
+                    buffer_size=self.config["buffer_size"],
+                    train_freq=tuple(self.config["train_freq"]) if isinstance(self.config["train_freq"], list) else self.config["train_freq"],
+                    use_sde=self.config["use_sde"],
+                    sde_sample_freq=self.config["sde_sample_freq"],
+                    learning_starts=self.config["learning_starts"],
+                    gradient_steps=(
+                        -1
+                        if self.parallelize and not self.config["gradient_steps"]
+                        else (
+                            self.config["gradient_steps"]
+                            if self.config["gradient_steps"]
+                            else 1
+                        )
+                    ),  # See 1.6.4 https://stable-baselines3.readthedocs.io/_/downloads/en/master/pdf/
+                )
+
+            else:
+                return SAC(
+                    policy,
+                    env,
+                    verbose=1,
+                    tensorboard_log=self.tensorboard_log,
+                    replay_buffer_class=self.replay_buffers.get([self.config["replay_buffer_class"]], None),
+                    replay_buffer_kwargs=self.replay_buffer_kwargs.get([self.config["replay_buffer_class"]], None),
+                    policy_kwargs=policy_kwargs,
+                    batch_size=self.config["batch_size"],
+                    gamma=self.config["gamma"],
+                    learning_rate=self.config["learning_rate"],
+                    tau=self.config["tau"],
+                    buffer_size=self.config["buffer_size"],
+                    train_freq=tuple(self.config["train_freq"]) if isinstance(self.config["train_freq"], list) else self.config["train_freq"],
+                    use_sde=self.config["use_sde"],
+                    sde_sample_freq=self.config["sde_sample_freq"],
+                    learning_starts=self.config["learning_starts"],
+                    gradient_steps=(
+                        -1
+                        if self.parallelize and not self.config["gradient_steps"]
+                        else (
+                            self.config["gradient_steps"]
+                            if self.config["gradient_steps"]
+                            else 1
+                        )
+                    ),  # See 1.6.4 https://stable-baselines3.readthedocs.io/_/downloads/en/master/pdf/
+                )
         elif self.algorithm == "PPO":
             return PPO(
                 policy,
