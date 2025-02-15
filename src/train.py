@@ -51,7 +51,7 @@ def run(config, logger):
     training_callback = CustomTensorboardCallback(n_envs=num_cpus-config['n_eval_envs'])
     eval_callback = EvalCallback(
         eval_env=eval_env,
-        eval_freq=config['mode']["eval_interval"],
+        eval_freq=config['mode']["eval_freq"],
         n_eval_episodes=5, # default: 5
         log_path=logger.log_dir,
         deterministic=True,
@@ -81,6 +81,7 @@ def run(config, logger):
     )
 
     print(f"🕒 Training completed in {training_duration:.2f} minutes")
+    logger.writer.flush()
 
     model_path = f"{logger.log_dir}/final_model.zip"
     agent.save(model_path)

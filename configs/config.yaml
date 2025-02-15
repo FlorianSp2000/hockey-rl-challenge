@@ -14,10 +14,6 @@ parallelize: True
 vector_type: subproc # select subproc or dummy
 opponent: weak
 win_rate_threshold_w_to_s: 0.8
-# gamma: 0.99
-# policy: MlpPolicy
-# learning_starts: 100
-# policy_kwargs: {}
 
 hydra:
   run:

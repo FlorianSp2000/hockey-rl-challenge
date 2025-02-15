@@ -25,6 +25,8 @@ class SACERE(SAC):
 
     def train(self, gradient_steps: int, batch_size: int = 64) -> None:
         # Switch to train mode (this affects batch norm / dropout)
+        # print(f"(self.num_timesteps) {(self.num_timesteps)}")
+        # print(f"(self.learning_starts) {(self.learning_starts)}")
         self.policy.set_training_mode(True)
         # Update optimizers learning rate
         optimizers = [self.actor.optimizer, self.critic.optimizer]
@@ -40,9 +42,9 @@ class SACERE(SAC):
         # print(f"self._total_timesteps {self._total_timesteps}")
         for gradient_step in range(gradient_steps):
             # Sample replay buffer
-            replay_data = self.replay_buffer.sample(batch_size, 
+            replay_data, indices, weights, env_indices = self.replay_buffer.sample(batch_size, 
                                                 env=self._vec_normalize_env, 
-                                                k=gradient_step+1, 
+                                                k=gradient_step, # TODO: include 0 or not; 0=uniform
                                                 K=gradient_steps, 
                                                 current_timestep=self.num_timesteps
                                             )  # type: ignore[union-attr]
@@ -90,9 +92,23 @@ class SACERE(SAC):
             current_q_values = self.critic(replay_data.observations, replay_data.actions)
 
             # Compute critic loss
-            critic_loss = 0.5 * sum(F.mse_loss(current_q, target_q_values) for current_q in current_q_values)
+            weights = th.tensor(weights, dtype=th.float32).unsqueeze(1)
+            critic_loss = 0.5 * sum(F.mse_loss(current_q, target_q_values, weight=weights) for current_q in current_q_values)
             assert isinstance(critic_loss, th.Tensor)  # for type checker
             critic_losses.append(critic_loss.item())  # type: ignore[union-attr]
+
+            # UPDATE Priorities for PER
+            if self.replay_buffer.use_per:
+                # print(f"current_q_values[0].size() {current_q_values[0].size()}")
+                # print(f"target_q_values.size() {target_q_values.size()}")
+                with th.no_grad():
+                    # Compute TD error by averaging over critics
+                    # TODO: Consider using min instead of mean (more conservative)
+                    td_errors = th.mean(th.stack([th.abs(current_q - target_q_values) for current_q in current_q_values]), dim=0)
+                    # print(f"th.mean(td_errors) {th.mean(td_errors)}")
+
+                for i, (index, env_idx) in enumerate(zip(indices, env_indices)):
+                    self.replay_buffer.priorities[index, env_idx] = td_errors[i].cpu().item() + 1e-5
 
             # Optimize the critic
             self.critic.optimizer.zero_grad()
