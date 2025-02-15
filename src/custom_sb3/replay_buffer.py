@@ -26,6 +26,7 @@ class EREBuffer(ReplayBuffer):
         self.beta0 = beta0
         self.betaT = betaT
         print(f"self.n_envs {self.n_envs}")
+        assert self.buffer_size * self.n_envs > self.cmin, "Buffer size too small for cmin"
 
     def get_eta(self, current_timestep):
         """Compute annealed eta using linear schedule."""

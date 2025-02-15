@@ -92,7 +92,7 @@ class SACERE(SAC):
             current_q_values = self.critic(replay_data.observations, replay_data.actions)
 
             # Compute critic loss
-            weights = th.tensor(weights, dtype=th.float32).unsqueeze(1)
+            weights = th.tensor(weights, dtype=th.float32).unsqueeze(1).to(self.device)
             critic_loss = 0.5 * sum(F.mse_loss(current_q, target_q_values, weight=weights) for current_q in current_q_values)
             assert isinstance(critic_loss, th.Tensor)  # for type checker
             critic_losses.append(critic_loss.item())  # type: ignore[union-attr]
@@ -106,7 +106,7 @@ class SACERE(SAC):
                     # TODO: Consider using min instead of mean (more conservative)
                     td_errors = th.mean(th.stack([th.abs(current_q - target_q_values) for current_q in current_q_values]), dim=0)
                     # print(f"th.mean(td_errors) {th.mean(td_errors)}")
-
+                # Update Priorities
                 for i, (index, env_idx) in enumerate(zip(indices, env_indices)):
                     self.replay_buffer.priorities[index, env_idx] = td_errors[i].cpu().item() + 1e-5
 
@@ -136,7 +136,7 @@ class SACERE(SAC):
 
         self._n_updates += gradient_steps
 
-        self.logger.record("train/n_updates", self._n_updates, exclude="tensorboard")
+        self.logger.record("train/n_updates", self._n_updates)
         self.logger.record("train/ent_coef", np.mean(ent_coefs))
         self.logger.record("train/actor_loss", np.mean(actor_losses))
         self.logger.record("train/critic_loss", np.mean(critic_losses))
