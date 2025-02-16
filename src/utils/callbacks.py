@@ -97,7 +97,8 @@ class WinRateCheckpointCallback(BaseCallback):
         # Get logged statistics
         win_rate = self.logger.name_to_value.get("episode/win_rate", None)
         if win_rate is not None and win_rate >= self.win_rate_threshold and win_rate > self.last_win_rate:
-            if self.num_timesteps - self.last_saved_step > 50000:  # Avoid frequent saves
+            # TODO: said frequency differently later on and make hydra parameter
+            if self.num_timesteps - self.last_saved_step > 100000:  # Avoid frequent saves
                 save_file = os.path.join(self.save_path, f"checkpoint_{self.num_timesteps}.zip")
                 self.model.save(save_file)
                 self.last_saved_step = self.num_timesteps
@@ -110,196 +111,21 @@ class WinRateCheckpointCallback(BaseCallback):
 
 
 class CustomEvalCallback(EvalCallback):
-    """Wrapper around SB3's EvalCallback to log hyperparameters and evaluation metrics."""
-    
-    def __init__(self, eval_env, custom_logger, eval_freq, **kwargs):
-        super().__init__(eval_env, eval_freq=eval_freq, **kwargs)
-        self._custom_logger = custom_logger
-        self._wins = 0
-        self._draws = 0
-        self._losses = 0
+    def _log_success_callback(self, locals_: dict[str, Any], globals_: dict[str, Any]) -> None:
+        """
+        Callback passed to the  ``evaluate_policy`` function
+        in order to log the success rate (when applicable),
+        Since hockey_env' success key is named differently we have to overwrite it
+
+        :param locals_:
+        :param globals_:
+        """
+        info = locals_["info"]
+        if locals_["done"]:
+            winner = info.get("winner")
+            if winner==1:
+                self._is_success_buffer.append(True)
+            else:
+                self._is_success_buffer.append(False)
 
 
-    def _on_step(self):
-        """Enhanced step method to track rewards during evaluation."""
-        continue_training = True
-
-        if self.eval_freq > 0 and self.n_calls % self.eval_freq == 0:
-            print(f"on_step EvalCallback inside")
-            # Sync environments if needed
-            if self.model.get_vec_normalize_env() is not None:
-                try:
-                    sync_envs_normalization(self.training_env, self.eval_env)
-                except AttributeError as e:
-                    raise AssertionError(
-                        "Training and eval env are not wrapped the same way, "
-                        "see Stable Baselines documentation for details."
-                    ) from e
-
-            # Reset tracking variables
-            self._wins = 0
-            self._draws = 0
-            self._losses = 0
-            episode_rewards = []
-
-            # Perform evaluation
-            eval_results, episode_lengths = evaluate_policy(
-                self.model,
-                self.eval_env,
-                n_eval_episodes=self.n_eval_episodes,
-                render=self.render,
-                deterministic=self.deterministic,
-                return_episode_rewards=True,
-                warn=self.warn
-            )
-            print(f"eval_results: {eval_results}")
-            print(f"episode_lengths: {episode_lengths}")
-            # Process episode rewards
-            for reward in eval_results:
-                episode_rewards.append(reward)
-                if reward == 10:
-                    self._wins += 1
-                elif reward == 0:
-                    self._draws += 1
-                elif reward == -10:
-                    self._losses += 1
-
-            # Compute rates
-            total_episodes = len(eval_results)
-            mean_reward = np.mean(eval_results)
-            
-            # Logging
-            if self._custom_logger:
-                self._custom_logger.log_scalar("Eval/MeanReward", mean_reward, self.num_timesteps)
-                
-                if total_episodes > 0:
-                    self._custom_logger.log_scalar("Eval/WinRate", self._wins / total_episodes, self.num_timesteps)
-                    self._custom_logger.log_scalar("Eval/DrawRate", self._draws / total_episodes, self.num_timesteps)
-                    self._custom_logger.log_scalar("Eval/LossRate", self._losses / total_episodes, self.num_timesteps)
-
-            # Standard EvalCallback processing
-            self.last_mean_reward = float(mean_reward)
-            
-            if self.verbose >= 1:
-                print(f"Eval num_timesteps={self.num_timesteps}, episode_reward={mean_reward:.2f}")
-                print(f"Wins: {self._wins}/{total_episodes}, Draws: {self._draws}/{total_episodes}, Losses: {self._losses}/{total_episodes}")
-
-            # Rest of the original implementation remains the same
-            # (checking for best model, triggering callbacks, etc.)
-
-        return continue_training
-
-
-class ComprehensiveTrainingCallback(BaseCallback):
-    """
-    A comprehensive callback to track and log various training metrics for model training.
-    
-    Tracks:
-    - Episode rewards
-    - Episode lengths
-    - Win/Draw/Loss statistics
-    - Mean rewards
-    - Episodic performance metrics
-    """
-    
-    def __init__(
-        self, 
-        verbose: int = 0, 
-        custom_logger: Optional[Logger] = None,
-        log_dir: Optional[str] = None
-    ):
-        super().__init__(verbose)
-        
-        # Tracking variables
-        self._episode_rewards = []
-        self._episode_lengths = []
-        self._wins = 0
-        self._draws = 0
-        self._losses = 0
-        
-        # Custom logging
-        self._custom_logger = custom_logger
-        self._log_dir = log_dir
-    
-    def _on_step(self) -> bool:
-        # Check if an episode has ended
-        if self.locals['dones']:
-            print(f"self.locals {self.locals}")
-            episode_reward = self.locals['infos'][0]['episode']['r']
-            self._episode_rewards.append(episode_reward)
-            
-            # Track episode length
-            episode_length = self.locals['infos'][0]['episode']['l']
-            self._episode_lengths.append(episode_length)
-            
-            # Track win/draw/loss based on final reward
-            self._wins += 1 if self.locals['infos'][0]['winner'] == 1 else self._wins
-            self._draws += 1 if self.locals['infos'][0]['winner'] == 0 else self._draws
-            self._losses += 1 if self.locals['infos'][0]['winner'] == -1 else self._losses
-            print(f"len(self.locals['infos']) {len(self.locals['infos'])}")
-            self._log_metrics()
-        
-        return True
-    
-    def _log_metrics(self):
-        """Log various training metrics"""
-        # Compute running metrics
-        if self._episode_rewards:
-            self._custom_logger.log_scalar(
-                "Training/MeanEpisodeReward", 
-                np.mean(self._episode_rewards), 
-                self.num_timesteps
-            )
-            self._custom_logger.log_scalar(
-                "Training/MeanEpisodeLength", 
-                np.mean(self._episode_lengths), 
-                self.num_timesteps
-            )
-        
-        # Log performance statistics
-        total_episodes = len(self._episode_rewards)
-        print(f"Updated self._episode_rewards: {self._episode_rewards}")
-        print(f"Updated self._episode_lengths: {self._episode_lengths}")
-        print(f"Total episodes counted: {len(self._episode_rewards)}")
-        print(f"self._wins: {self._wins}, self._draws: {self._draws}, self._losses: {self._losses}")
-        assert total_episodes == (self._wins + self._draws + self._losses)
-
-        if total_episodes != 0:
-            self._custom_logger.log_scalar(
-                "Training/WinRate", 
-                self._wins / total_episodes, 
-                self.num_timesteps
-            )
-
-            self._custom_logger.log_scalar(
-                "Training/DrawRate", 
-                self._draws / total_episodes, 
-                self.num_timesteps
-            )
-            self._custom_logger.log_scalar(
-                "Training/LossRate", 
-                self._losses / total_episodes, 
-                self.num_timesteps
-            )
-    
-    # TODO: seems to be called every step, not at the end of a rollout for TD3
-    # def _on_rollout_end(self):
-    #     """Called at the end of a rollout (e.g., after multiple episodes)."""
-    #     # Log metrics if custom logger is provided
-    #     if self._custom_logger:
-    #         self._log_metrics()
-
-    
-    def _on_training_end(self) -> None:
-        """Final logging at the end of training"""
-        print(f"_on_training_end EvalCAllback")
-        if self._custom_logger:
-            # Log final summary
-            total_episodes = self._wins + self._draws + self._losses
-            print(f"\nTraining Summary:")
-            print(f"Total Episodes: {total_episodes}")
-            print(f"Wins: {self._wins} ({self._wins/total_episodes*100:.2f}%)")
-            print(f"Draws: {self._draws} ({self._draws/total_episodes*100:.2f}%)")
-            print(f"Losses: {self._losses} ({self._losses/total_episodes*100:.2f}%)")
-            print(f"Mean Episode Reward: {np.mean(self._episode_rewards):.2f}")
-            print(f"Mean Episode Length: {np.mean(self._episode_lengths):.2f}")

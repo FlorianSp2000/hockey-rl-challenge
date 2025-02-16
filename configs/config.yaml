@@ -14,6 +14,7 @@ parallelize: True
 vector_type: subproc # select subproc or dummy
 opponent: weak
 win_rate_threshold_w_to_s: 0.8
+device: "cpu" # "cuda" or "cpu"
 
 hydra:
   run:

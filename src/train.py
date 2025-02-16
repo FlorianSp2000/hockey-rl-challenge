@@ -13,8 +13,7 @@ from stable_baselines3.common.vec_env import SubprocVecEnv
 import src # trigger custom env registration
 from src.utils.algo_wrapper import AlgoWrapper
 from src.utils.callbacks import (
-    # CustomEvalCallback,
-    # ComprehensiveTrainingCallback,
+    CustomEvalCallback,
     CustomTensorboardCallback,
     WinRateCheckpointCallback
 )
@@ -49,10 +48,15 @@ def run(config, logger):
     agent.set_logger(sb3_logger)
 
     training_callback = CustomTensorboardCallback(n_envs=num_cpus-config['n_eval_envs'])
-    eval_callback = EvalCallback(
+    # account for vectorized environments
+    # TODO: should I use k * round(N/k) 
+    eval_freq = max(config['mode']["eval_freq"] // num_cpus-config['n_eval_envs'], 1) if config['parallelize'] else config['mode']["eval_freq"]
+    print(f"eval_freq is: {eval_freq}")
+    
+    eval_callback = CustomEvalCallback(
         eval_env=eval_env,
-        eval_freq=config['mode']["eval_freq"],
-        n_eval_episodes=5, # default: 5
+        eval_freq=eval_freq,
+        n_eval_episodes=config['mode']["n_eval_episodes"], # default in SB3 is 5
         log_path=logger.log_dir,
         deterministic=True,
         render=False,

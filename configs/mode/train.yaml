@@ -1,5 +1,6 @@
 name: train
 eval_freq: 10000
+n_eval_episodes: 10
 total_timesteps: 1000000
 log_dir: logs/${algorithm.name}/sb3/${mode.name}
 tensorboard_log: ${mode.log_dir}

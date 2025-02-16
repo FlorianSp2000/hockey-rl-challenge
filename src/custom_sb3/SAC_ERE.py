@@ -92,7 +92,8 @@ class SACERE(SAC):
             current_q_values = self.critic(replay_data.observations, replay_data.actions)
 
             # Compute critic loss
-            weights = th.tensor(weights, dtype=th.float32).unsqueeze(1).to(self.device)
+            if weights is not None:
+                weights = th.tensor(weights, dtype=th.float32).unsqueeze(1).to(self.device)
             critic_loss = 0.5 * sum(F.mse_loss(current_q, target_q_values, weight=weights) for current_q in current_q_values)
             assert isinstance(critic_loss, th.Tensor)  # for type checker
             critic_losses.append(critic_loss.item())  # type: ignore[union-attr]
