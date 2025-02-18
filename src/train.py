@@ -87,8 +87,13 @@ def run(config, logger):
     print(f"🕒 Training completed in {training_duration:.2f} minutes")
     logger.writer.flush()
 
-    model_path = f"{logger.log_dir}/final_model.zip"
-    agent.save(model_path)
-    print(f"Model saved at: {model_path}")
+    # Close the environment
+    env.close()
+    eval_env.close()
+    del env, eval_env
+    
+    # model_path = f"{logger.log_dir}/final_model.zip"
+    # agent.save(model_path)
+    # print(f"Model saved at: {model_path}")
 
     logger.close()

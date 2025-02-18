@@ -20,7 +20,6 @@ class SACERE(SAC):
     """
     Soft Actor-Critic (SAC) with ERE replay buffer.
 
-    :param bla: bla_description
     """
 
     def train(self, gradient_steps: int, batch_size: int = 64) -> None:

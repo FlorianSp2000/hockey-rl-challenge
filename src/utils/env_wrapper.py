@@ -12,7 +12,7 @@ class HockeySB3Wrapper(gym.Wrapper):
     def __init__(self, env, opponent_type="weak"):
         super().__init__(env) # Initialize the parent class with the environment
         self.opponent = h_env.BasicOpponent(weak=(opponent_type == "weak"))
-
+        print(f"self.opponent.weak: {self.opponent.weak}")
         # Define observation and action space
         self.observation_space = self.env.observation_space
         self.action_space = self.env.action_space
@@ -46,7 +46,7 @@ def make_env(seed, rank, opponent_type="weak"):
         env = HockeySB3Wrapper(env, opponent_type=opponent_type)
         env = Monitor(env)
         return env
-    set_random_seed(seed + rank)
+    set_random_seed(seed)
     return _init
 
 def create_parallel_envs(config, n_envs, opponent_type="weak"):

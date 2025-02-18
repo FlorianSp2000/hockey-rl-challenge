@@ -4,8 +4,8 @@ params:
   gamma: 0.99
   learning_rate: 0.0003
   learning_starts: 100 # warm up steps
-  implementation: sb3  # Options: "custom", "sb3", "other"
-  policy: "MlpPolicy" # only for sb3
+  implementation: sb3  # Options: "custom", "sb3"
+  policy: "MlpPolicy"
   gradient_steps: 1 # gradient_steps determines the number of parameter updates performed during each training iteration, while train_freq controls the frequency of training updates
   net_arch: {pi: [256, 256], qf: [256, 256]}
   activation_fn: "ReLU"
@@ -26,3 +26,10 @@ params:
     alpha: 0.6 # prioritization exponent
     beta0: 0.4 # importance sampling exponent at time t=0
     betaT: 1 # importance sampling exponent at time t=T 
+  use_cepo: false
+  cepo_kwargs:
+    ce_N: 100 # sample number N
+    ce_ne: 5 # # number of elites
+    ce_size:  0.33 # elite fraction
+    ce_t: 10 # number of iterations
+    

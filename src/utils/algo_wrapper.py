@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 from src.custom_sb3.replay_buffer import EREBuffer
 from src.custom_sb3.SAC_ERE import SACERE
+from src.custom_sb3.SAC_CEPO import SACCEPO
 from pink import PinkNoiseDist, PinkActionNoise
 
 class AlgoWrapper:
@@ -100,7 +101,41 @@ class AlgoWrapper:
                         )
                     ),  # See 1.6.4 https://stable-baselines3.readthedocs.io/_/downloads/en/master/pdf/
                 )
-
+            elif self.config['use_cepo']:
+                print("using SAC-CEPO Agent")
+                model = SACCEPO(
+                    policy,
+                    env,
+                    verbose=1,
+                    tensorboard_log=self.tensorboard_log,
+                    replay_buffer_class=self.replay_buffers.get(self.config["replay_buffer_class"], None),
+                    replay_buffer_kwargs=self.replay_buffer_kwargs.get(self.config["replay_buffer_class"], None),
+                    policy_kwargs=policy_kwargs,
+                    batch_size=self.config["batch_size"],
+                    gamma=self.config["gamma"],
+                    learning_rate=self.config["learning_rate"],
+                    tau=self.config["tau"],
+                    buffer_size=self.config["buffer_size"],
+                    train_freq=tuple(self.config["train_freq"]) if isinstance(self.config["train_freq"], list) else self.config["train_freq"],
+                    use_sde=self.config["use_sde"],
+                    sde_sample_freq=self.config["sde_sample_freq"],
+                    learning_starts=self.config["learning_starts"],
+                    device=self.device,
+                    ce_N=self.config["cepo_kwargs"]["ce_N"], # sample number N
+                    ce_ne=self.config["cepo_kwargs"]["ce_ne"], # number of elites
+                    ce_t=self.config["cepo_kwargs"]["ce_t"], # number of iterations
+                    ce_size=self.config["cepo_kwargs"]["ce_size"], # for initializing scale
+                    gradient_steps=(
+                        -1
+                        if self.parallelize and not self.config["gradient_steps"]
+                        else (
+                            self.config["gradient_steps"]
+                            if self.config["gradient_steps"]
+                            else 1
+                        )
+                    ),  # See 1.6.4 https://stable-baselines3.readthedocs.io/_/downloads/en/master/pdf/
+                )
+                
             else:
                 print("using SAC Agent")
                 model = SAC(

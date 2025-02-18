@@ -12,14 +12,23 @@ from hydra.core.hydra_config import HydraConfig
 def main(cfg: DictConfig):
     # Merge Hydra config with argparse arguments
     log_dir_datetimed = HydraConfig.get().run.dir
-    logger = Logger(log_dir_datetimed, cfg)
 
     mode = cfg.mode.name
     config = OmegaConf.to_container(cfg, resolve=True)
     print(f"Config: {config}")
 
     if mode == "train":
-        train.run(config, logger)
+        if len(cfg.seed) > 1:
+            print(f"Starting Ablation study over {len(cfg.seed)} seeds")
+            for seed in cfg.seed:
+                config["seed"] = seed
+                log_dir_datetimed = HydraConfig.get().run.dir + "_s" + str(seed)
+                logger = Logger(log_dir_datetimed, cfg)
+                train.run(config, logger)
+        else:
+            logger = Logger(log_dir_datetimed, cfg)
+            config["seed"] = cfg.seed[0]
+            train.run(config, logger)
     elif mode == "test":
         test.run(config, logger)
     elif mode == "selfplay":

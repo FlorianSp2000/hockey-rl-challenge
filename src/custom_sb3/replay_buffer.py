@@ -91,7 +91,7 @@ class EREBuffer(ReplayBuffer):
     def _sample_recent(self, batch_size: int, N: int, k: int, K: int, current_timestep: int, env: Optional[VecNormalize] = None):
         # Emphasizing Recent Experience (ERE)
         eta = self.get_eta(current_timestep)  # Use annealed eta
-
+        # TODO: Decide if wide or narrow window is better
         ck = max(int(N * (eta ** (k * self.max_eps_length / K ))), self.cmin) // self.n_envs  # Make sure that recency bias comes into effect when we have collected c_k transitions in total
         # print(f"ck: {ck}, N: {N}, k: {k}, K: {K}, max_eps_length: {self.max_eps_length}")
         # Handle wrap around case
