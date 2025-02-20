@@ -416,6 +416,8 @@ class SACCEPO(SAC):
                 # search for optimal mean
                 for t in range(self.ce_t):
                     # Bound normal distribution with 3 stddev
+                    scale = th.clamp(scale, min=1e-6)
+
                     upper_bound = location + scale * 3
                     lower_bound = location - scale * 3
                     samples = th.clamp(Normal(location, scale).sample((self.ce_N,)), lower_bound, upper_bound)

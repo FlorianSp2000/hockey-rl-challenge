@@ -5,17 +5,27 @@ from gymnasium.envs.registration import register
 from stable_baselines3.common.vec_env import SubprocVecEnv, DummyVecEnv
 from stable_baselines3.common.utils import set_random_seed
 from stable_baselines3.common.monitor import Monitor
+from stable_baselines3 import SAC
+from src.custom_sb3.SAC_ERE import SACERE
+from src.utils.selfplay_utils import ModelRecord
+from typing import Dict
 
 ENV_TYPES = {'subproc': SubprocVecEnv, 'dummy': DummyVecEnv}
 
 class HockeySB3Wrapper(gym.Wrapper):
-    def __init__(self, env, opponent_type="weak"):
+    def __init__(self, env, rank, opponent_type="weak", model_class=None, model_pool=None):
         super().__init__(env) # Initialize the parent class with the environment
-        self.opponent = h_env.BasicOpponent(weak=(opponent_type == "weak"))
-        print(f"self.opponent.weak: {self.opponent.weak}")
         # Define observation and action space
         self.observation_space = self.env.observation_space
         self.action_space = self.env.action_space
+        self.rank = rank
+        # selfplay  
+        # self.opponent = h_env.BasicOpponent(weak=(opponent_type == "weak"))
+        self.model_class = model_class
+        self.model_pool = model_pool
+        self.current_opponent_id = None
+        self.set_opponent(opponent_type)
+        print(f"self.opponent.weak: {self.opponent.weak}")
 
     def reset(self, seed=None, options=None):
         obs, info = self.env.reset()
@@ -35,29 +45,60 @@ class HockeySB3Wrapper(gym.Wrapper):
 
     def close(self):
         self.env.close()
+    
+    def set_opponent(self, opponent_type_or_id):
+        """Set the current opponent"""
+        if opponent_type_or_id in ["weak", "strong", "basic_weak", "basic_strong"]:
+            opponent_type_or_id = opponent_type_or_id.split('_')[-1]
+            self.opponent = h_env.BasicOpponent(weak=(opponent_type_or_id == "weak"))
+            self.current_opponent_id = f"basic_{opponent_type_or_id}"
+        elif self.model_pool and opponent_type_or_id in self.model_pool.models:
+            model_path = self.model_pool.get_model_path(opponent_type_or_id)
+            self.opponent = SelfPlayOpponent(self.model_class, model_path)
+            self.current_opponent_id = opponent_type_or_id
+        else:
+            raise ValueError(f"Invalid opponent type or ID: {opponent_type_or_id}")
+    
+    def synchronize_model_pools(self, new_model_pool_models: Dict[str, ModelRecord]):
+        """Method to copy model pool from callback (source of truth) to buffer callsback"""
+        self.model_pool.models = new_model_pool_models
+        # if self.rank == 0:
+        #     print(f"self.model_pool.models after sync: {self.model_pool.models}")
+        
+        
 
-def make_env(seed, rank, opponent_type="weak"):
+
+def make_env(seed, rank, model_pool=None, opponent_type="weak", model_class=None):
     """
     Utility function for creating multiple environments for parallel execution.
     This function is required for SubprocVecEnv, which spawns environments.
     """
     def _init():
         env = h_env.HockeyEnv()
-        env = HockeySB3Wrapper(env, opponent_type=opponent_type)
+        env = HockeySB3Wrapper(env, rank, opponent_type=opponent_type, model_pool=model_pool, model_class=model_class)
         env = Monitor(env)
         return env
     set_random_seed(seed)
     return _init
 
-def create_parallel_envs(config, n_envs, opponent_type="weak"):
-    env_fns = [make_env(config["seed"], i, opponent_type) for i in range(n_envs - 1)]
+def create_parallel_envs(config, n_envs, model_pool=None, opponent_type="weak"):
+    model_class = None
+    if config['algorithm']['name'].lower() == 'sac':
+        model_class = SAC
+        if config['algorithm']['params']['replay_buffer_class'] == 'ERE':
+            model_class = SACERE   
+    print(f"model_class: {model_class}")
+    env_fns = [make_env(config["seed"], i, model_pool, opponent_type, model_class) for i in range(n_envs - 1)]
     env = ENV_TYPES[config["vector_type"]](env_fns)
     return env
 
 
-# # Reregister the environment as old registry is invalid (laserhockey instead of hockey module)
-# register(
-#     id='HockeyWrapped-v0',
-#     entry_point='hockey.hockey_env:HockeyEnv',
-#     kwargs={'mode': 0}
-# )
+
+class SelfPlayOpponent:
+    def __init__(self, model_class, model_path: str):
+        self.model = model_class.load(model_path)
+        self.weak = False  # For compatibility with BasicOpponent interface
+    
+    def act(self, observation):
+        action, _ = self.model.predict(observation, deterministic=True)
+        return action

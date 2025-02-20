@@ -1,4 +1,3 @@
-# Prepare moving to Hydra for config management and composition
 # config/config.yaml
 defaults:
   - _self_
@@ -17,6 +16,11 @@ opponent: weak
 win_rate_threshold_w_to_s: 0.8
 device: "cpu" # "cuda" or "cpu"
 
+checkpoint:
+  load_from: null #logs/SAC/sb3/train/run_2025-02-18_14-45-48_s42 # null # Set to path of checkpoint to load from
+  reset_num_timesteps: True  # Whether to reset the timestep counter when loading
+
+
 hydra:
   run:
-    dir: ${mode.log_dir}/run_${now:%Y-%m-%d_%H-%M-%S}
+    dir: ${get_run_dir:${checkpoint.load_from},${mode.log_dir}}/run_${now:%Y-%m-%d_%H-%M-%S}
