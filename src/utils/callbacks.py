@@ -28,7 +28,6 @@ class CustomTensorboardCallback(BaseCallback):
     def _on_step(self) -> bool:
         infos = self.locals['infos']
         dones = self.locals['dones']
-        # print(f"len(infos): {len(infos)}")
         episode_finished = False  # Flag to track if at least one environment finished
 
         for i in range(min(self.n_envs, len(infos))):
@@ -138,6 +137,7 @@ class SelfPlayCallback(BaseCallback):
         selfplay_env,
         opponent_share_constraint: Optional[float] = 0.5,
         opponent_switch_freq: int = 50000,
+        mixing_ratio: float = 0.2,
         n_envs: int = 1,
         verbose: int = 1
     ):
@@ -156,6 +156,10 @@ class SelfPlayCallback(BaseCallback):
         self.opponent_log: list[OpponentLog] = [] # Used for json logging
         # Metrics
         self.n_envs = n_envs
+        self.n_mixing_envs = int(n_envs * mixing_ratio) # for mixing strategy
+        print(f"self.n_mixing_envs: {self.n_mixing_envs}")
+        self.mixing_opponents = ["basic_weak", "basic_strong"]
+        self.mixing_opponent_idx = 0
         self.all_rewards = []  # Stores completed episode rewards
         self.all_lengths = []  # Stores completed episode lengths
         self.wins = 0
@@ -181,7 +185,9 @@ class SelfPlayCallback(BaseCallback):
         dones = self.locals['dones']
         episode_finished = False  # Flag to track if at least one environment finished
 
-        for i in range(min(self.n_envs, len(infos))):
+        num_of_envs = min(self.n_envs, len(infos))
+        
+        for i in range(num_of_envs - self.n_mixing_envs):
             info = infos[i]
 
             if dones[i]:  # If episode ends in this environment
@@ -223,9 +229,14 @@ class SelfPlayCallback(BaseCallback):
         if self.current_opponent_id is None:
             print("Getting opponent from env")
             current_opponent_ids = self.selfplay_env.get_attr("current_opponent_id")
-            assert len(set(current_opponent_ids)) == 1, "All environments should have the same opponent"
+            # print(f"list(set(current_opponent_ids)): {list(set(current_opponent_ids))}")
             self.current_opponent_id = str(current_opponent_ids[0])
         
+        current_opponent_ids = self.selfplay_env.get_attr("current_opponent_id")
+        opp_id_counts = {id_: current_opponent_ids.count(id_) for id_ in set(current_opponent_ids)}
+        print(f"opp_id_counts: {opp_id_counts}")
+        # print(f"list(set(current_opponent_ids)): {list(set(current_opponent_ids))}")
+
         # Store win rate against current opponent
         print(f"self.current_opponent_id: {self.current_opponent_id}")
         self.win_rates[self.current_opponent_id] = win_rate
@@ -233,7 +244,9 @@ class SelfPlayCallback(BaseCallback):
         print(f"selfplaycallback self.win_rates: {self.win_rates}")
         # Update elo ratings
         last_relative_strength = self.model_pool.current_relative_strength
-        current_relative_strength = self.model_pool._update_relative_strengths(self.win_rates) # Updates current_relative_strength
+        # Update elo only based on last opponent
+        win_rate_for_update = {self.current_opponent_id: win_rate}
+        current_relative_strength = self.model_pool._update_relative_strengths(win_rate_for_update) # Updates current_relative_strength
         opponent_relative_strength = self.model_pool.models[self.current_opponent_id].relative_strength
 
         print(f"CALLBACK current model's new relative_strength is {current_relative_strength}")
@@ -261,12 +274,15 @@ class SelfPlayCallback(BaseCallback):
         self.opponent_log.append([self.num_timesteps, self.current_opponent_id, win_rate, current_relative_strength, opponent_relative_strength])
         # Select new opponent based on current performance
         new_opponent_id = self.model_pool.select_opponent()
+        self.current_opponent_id = new_opponent_id
 
         # new_opponent_id = self.selfplay_env.env_method("select_opponent", win_rate, indices=0)
         print(f"new_opponent_id in callback: {new_opponent_id}")
-        # Switch opponent in all environments TODO: set opponents in environments differently
-        self.selfplay_env.env_method("set_opponent", new_opponent_id)        
-        self.current_opponent_id = new_opponent_id
+        self.selfplay_env.env_method("set_opponent", new_opponent_id)
+        # MIXING STRATEGY: Set last self.n_mixing_envs environments to play against basic opponent alternating weak and strong 
+        next_basic_opp_id = self.mixing_opponents[(self.mixing_opponent_idx + 1) % len(self.mixing_opponents)]
+        self.selfplay_env.env_method("set_opponent", next_basic_opp_id, indices=range(self.n_envs - self.n_mixing_envs -1 , self.n_envs - 1))
+        self.mixing_opponent_idx += 1
         
         if self.verbose > 0:
             print(f"Switching to opponent {new_opponent_id} \n (Win rate of current model against {new_opponent_id} so far: {self.win_rates.get(self.current_opponent_id, None)})") # :.2f

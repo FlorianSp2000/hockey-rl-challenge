@@ -19,13 +19,14 @@ from src.utils.callbacks import (
 )
 from src.utils.env_wrapper import HockeySB3Wrapper, create_parallel_envs
 from src.utils.logger import print_system_info
+from src.utils.model_io import get_enumerated_path
 import hockey.hockey_env as h_env
 
 def run(config, logger):
     num_cpus, num_gpus = print_system_info()
-    # synchronize custom logger with SB3 logger TODO: still necessary?
+    # synchronize custom logger with SB3 logger
     config["tensorboard_log"] = logger.log_dir
-
+    
     # Load opponent mode from config
     opponent_type = config.get("opponent", "weak")  # Default: weak opponent
 
@@ -41,7 +42,7 @@ def run(config, logger):
         env = HockeySB3Wrapper(h_env.HockeyEnv(), opponent_type)
         eval_env = Monitor(HockeySB3Wrapper(h_env.HockeyEnv(), opponent_type))
 
-    agent = algo_wrapper.get_model(env=env)
+    agent = algo_wrapper.create_or_load_model(env=env)
 
     # synchronize custom logger with SB3 logger
     sb3_logger = configure(logger.log_dir, ["tensorboard", "stdout"])
@@ -49,7 +50,6 @@ def run(config, logger):
 
     training_callback = CustomTensorboardCallback(n_envs=num_cpus-config['n_eval_envs'])
     # account for vectorized environments
-    # TODO: should I use k * round(N/k) 
     eval_freq = max(config['mode']["eval_freq"] // num_cpus-config['n_eval_envs'], 1) if config['parallelize'] else config['mode']["eval_freq"]
     print(f"eval_freq is: {eval_freq}")
     
@@ -70,9 +70,10 @@ def run(config, logger):
     start_time = time.time()
     print("### Starting Training ###")
     agent.learn(
-        total_timesteps=config['mode']["total_timesteps"],
+        total_timesteps=config["mode"]["total_timesteps"],
         callback=[training_callback, eval_callback, winrate_callback],
         tb_log_name="",
+        reset_num_timesteps=config["checkpoint"]["reset_num_timesteps"],
     )
 
     end_time = time.time()
@@ -92,8 +93,8 @@ def run(config, logger):
     eval_env.close()
     del env, eval_env
     
-    # model_path = f"{logger.log_dir}/final_model.zip"
-    # agent.save(model_path)
-    # print(f"Model saved at: {model_path}")
+    model_path = get_enumerated_path(f"{logger.log_dir}/final_model.zip")
+    agent.save(model_path)
+    print(f"Model saved at: {model_path}")
 
     logger.close()

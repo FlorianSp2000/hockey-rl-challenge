@@ -48,6 +48,7 @@ def run(config, logger):
             opponent_share_constraint=config['mode']["opponent_share_constraint"],
             opponent_switch_freq=config['mode']["opponent_switch_freq"],
             n_envs=num_of_train_envs,
+            mixing_ratio=config['mode']["mixing_ratio"],
             verbose=1
         )
     ]
