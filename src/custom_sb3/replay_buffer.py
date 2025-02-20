@@ -13,7 +13,7 @@ class EREBuffer(ReplayBuffer):
                  eta0=0.996, etaT=1, total_timesteps=1_000_000, cmin=5000, alpha=0.6, use_per=False, beta0=0.4, betaT=1):
         super().__init__(buffer_size, observation_space, action_space, device, 
                          n_envs, optimize_memory_usage, handle_timeout_termination)
-        print(f"Using EREBuffer with: use_per={use_per}, alpha={alpha}, eta0={eta0}, etaT={etaT}, cmin={cmin}, total_timesteps={total_timesteps}")
+        print(f"EREBuffer Init with: use_per={use_per}, alpha={alpha}, eta0={eta0}, etaT={etaT}, cmin={cmin}, total_timesteps={total_timesteps}")
         self.eta0 = eta0
         self.etaT = etaT
         self.cmin = cmin 
@@ -91,7 +91,6 @@ class EREBuffer(ReplayBuffer):
     def _sample_recent(self, batch_size: int, N: int, k: int, K: int, current_timestep: int, env: Optional[VecNormalize] = None):
         # Emphasizing Recent Experience (ERE)
         eta = self.get_eta(current_timestep)  # Use annealed eta
-        # TODO: Decide if wide or narrow window is better
         ck = max(int(N * (eta ** (k * self.max_eps_length / K ))), self.cmin) // self.n_envs  # Make sure that recency bias comes into effect when we have collected c_k transitions in total
         # print(f"ck: {ck}, N: {N}, k: {k}, K: {K}, max_eps_length: {self.max_eps_length}")
         # Handle wrap around case
@@ -107,8 +106,6 @@ class EREBuffer(ReplayBuffer):
         
         # Prioritized Experience Replay (PER)
         if self.use_per:
-            # if len(recent_indices) == ck and ck != self.pos:
-            #     print(f"NOW Sampling only from most recent {len(recent_indices)} time steps")
             all_priorities = self.priorities[recent_indices].flatten()
             probs = all_priorities ** self.alpha
             # probs = self.priorities[recent_indices] ** self.alpha

@@ -9,6 +9,18 @@ def load_config(config_path):
         return yaml.safe_load(file)
 
 
+def get_enumerated_path(base_path):
+    directory, filename = os.path.split(base_path)
+    name, ext = os.path.splitext(filename)
+    counter = 1
+
+    while os.path.exists(base_path):
+        new_filename = f"{name}_{counter}{ext}"
+        base_path = os.path.join(directory, new_filename)
+        counter += 1
+
+    return base_path
+
 def load_trained_model(model_path, config):
     """Loads a trained model from file."""
     if config["algorithm"] == "SAC":

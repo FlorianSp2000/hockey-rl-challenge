@@ -18,6 +18,8 @@ The project uses a custom hockey environment built on the Gymnasium API (formerl
 - `TRAIN_DEFENSE`: Practice defending against incoming shots
 
 ## Competition Setup 🏆
+Team name:
+PytorchPedalPushers-SAC
 
 - Competition server is running at: http://comprl.cs.uni-tuebingen.de
 - Weak and strong baseline agents are available for testing
@@ -67,18 +69,26 @@ The output can be found in job.JOBNUMBER.out and the errors in job.JOBNUMBER.err
 
 #### Run Model Training and Evaluation
 
-Run the **main.py** and specify the **config.yaml** that contains the desired method and mode (training, evaluation).
+Run the **main.py** and specify the corresponding configs that contain the desired method and mode (training, evaluation) using hydra. For example to train SAC with default parameters, type:
 
 ```bash
-python3 ./main.py --config ./configs/TD3/sb3/train.yaml --opponent weak
+python3 ./main.py algorithm=sac mode=train 
 ```
+
+and hydra will automatically compose configs/mode/train.yaml, configs/algorithm/sac.yaml and configs/config.yaml together.
 
 To see the results in tensorboard:
 
 ```bash
-tensorboard --logdir=./logs/TD3/sb3/train
+tensorboard --logdir=./logs/
 ```
 
 ### Hyperparameter Tuning
 - [Smooth Exploration for RL](https://arxiv.org/pdf/2005.05719) contains optimal HPs on Pybullet envs for PPO, SAC, TD3 with gSDE
 - [rl-zoo](https://github.com/DLR-RM/rl-baselines3-zoo/blob/master/rl_zoo3/hyperparams_opt.py) contains code to conduct HP search with optuna
+
+### References
+
+- For the implementation of the ERE+PER ReplayBuffer confer [Link](https://github.com/BY571/Soft-Actor-Critic-and-Extensions/tree/master)
+- For the implementation of the SAC-CEPO confer [Link](https://github.com/wcgcyx/SAC-CEPO/tree/master)
+
