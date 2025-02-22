@@ -33,10 +33,13 @@ def main(cfg: DictConfig):
         test.run(config, logger)
     elif mode == "selfplay":
         print("start selfplay")
-        logger = create_logger(cfg, log_dir_datetimed)
+        logger = Logger(log_dir_datetimed, cfg) # We don't want to write the selfplay results into the potential checkpoint directory
+        # logger = create_logger(cfg, log_dir_datetimed)
         config["seed"] = cfg.seed[0]
         selfplay.run(config, logger)
     elif mode == "hp_tuning":
+        logger = create_logger(cfg, log_dir_datetimed)
+        config["seed"] = cfg.seed[0]
         hp_tuning.run(config, logger)
     else:
         raise ValueError(f"Unknown mode: {mode}")

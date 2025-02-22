@@ -15,6 +15,7 @@ vector_type: subproc # select subproc or dummy
 opponent: weak
 win_rate_threshold_w_to_s: 0.8
 device: "cpu" # "cuda" or "cpu"
+change_sides: True
 
 checkpoint:
   load_from: null #logs/SAC/sb3/train/run_2025-02-18_14-45-48_s42 # null # Set to path of checkpoint to load from

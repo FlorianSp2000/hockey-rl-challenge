@@ -19,7 +19,6 @@ class Logger:
         # self.sb3_logger = SB3Logger(folder=self.log_dir, output_formats=['tensorboard', 'stdout'])
         
         # Save HPs to YAML and TensorBoard
-        # self.save_hyperparams(config) # Not necessary anymore as hydra saves the config automatically
         self.log_hyperparams(config)
 
     def log_scalar(self, tag, value, step=None):

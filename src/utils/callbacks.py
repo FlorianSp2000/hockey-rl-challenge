@@ -254,7 +254,7 @@ class SelfPlayCallback(BaseCallback):
         if (current_relative_strength - last_relative_strength >= 0 and 
             len(self.win_rates) >= 2 and 
             len(self.win_rates) / len(self.model_pool.models) > self.opponent_share_constraint and
-            self.model_pool.curriculum_phase != "assessment"):
+            current_relative_strength >= self.model_pool.CURRICULUM_THRESHOLDS['assessment']):
             
             model_path = os.path.join(
                 self.save_path, 
