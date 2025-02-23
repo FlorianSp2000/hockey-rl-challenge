@@ -6,7 +6,6 @@ from stable_baselines3.common.buffers import ReplayBuffer
 from src.custom_sb3.replay_buffer import EREBuffer 
 import hockey.hockey_env as h_env
 from scipy import stats
-import numpy as np
 
 
 def test_fifo_behavior(buffer_size=1000):

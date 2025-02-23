@@ -4,12 +4,12 @@ log_dir: logs/${algorithm.name}/sb3/${mode.name}
 tensorboard_log: ${mode.log_dir}
 
 start_relative_strength: 1000 # Initial relative strength of the model pool
-opponent_switch_freq: 50000 # Number of environment steps after which the opponent is switched
+opponent_switch_freq: 25000 # Number of environment steps after which the opponent is switched
 pool_size: 7 # Number of models in model pool (excluding basic models)
 opponent_share_constraint: 0.5 # Share of opponents of model pool required to have played against at least once before saving model
 mixing_ratio: 0.15 # Mixing ratio of model pool and basic models in environments
 curriculum:
-  assessment: 1200 # upper bound elo rating TODO: 1200
+  assessment: 1150 # upper bound elo rating
   learning: 1300 # upper bound elo rating; if larger than learning = competitive
 
 game_decision_margin:

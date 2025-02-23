@@ -8,6 +8,7 @@ params:
   policy: "MlpPolicy"
   gradient_steps: 1 # gradient_steps determines the number of parameter updates performed during each training iteration, while train_freq controls the frequency of training updates
   net_arch: {pi: [256, 256], qf: [256, 256]}
+  n_critics: 2
   activation_fn: "ReLU"
   tau: 0.005
   buffer_size: 1000000

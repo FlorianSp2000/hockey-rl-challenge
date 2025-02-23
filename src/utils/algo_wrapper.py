@@ -61,11 +61,18 @@ class AlgoWrapper:
         """
         checkpoint_path = self.checkpoint_path if checkpoint_path is None else checkpoint_path
 
+        print(f"working directory: {os.getcwd()}")
+        print(f"absolute path of checkpoint: {os.path.abspath(checkpoint_path)}")
+        
         if not os.path.exists(checkpoint_path):
             raise FileNotFoundError(f"Checkpoint not found at {checkpoint_path}")
-        # print(f"working directory: {os.getcwd()}")
-        # print(f"absolute path of checkpoint: {os.path.abspath(checkpoint_path)}")
+            # Determine the model path based on whether the checkpoint_path ends with .zip
+        # if checkpoint_path.endswith('.zip'):
+        #     model_path = checkpoint_path
+        # else:
+        
         model_path = os.path.join(checkpoint_path, "final_model")
+
         sb3_model_class = self.get_sb3_class(self.algorithm)
         algorithm_config = self.config if algorithm_config is None else algorithm_config
 
@@ -113,6 +120,7 @@ class AlgoWrapper:
             net_arch=net_arch,
             activation_fn=activation_fn,
             log_std_init=self.config["log_std_init"],
+            n_critics=self.config["n_critics"],
         )
         print(f"policy_kwargs: {policy_kwargs}")
 
