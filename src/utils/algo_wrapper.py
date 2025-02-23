@@ -12,6 +12,7 @@ import os
 import hockey.hockey_env as h_env
 from stable_baselines3.common.base_class import BaseAlgorithm
 import pprint
+from src.utils.env_wrapper import SelfPlayOpponent
 
 class AlgoWrapper:
     activation_fns = {'ReLU': nn.ReLU, 'Tanh': nn.Tanh, 'LeakyReLU': nn.LeakyReLU}
@@ -49,7 +50,7 @@ class AlgoWrapper:
         else:
             raise ValueError(f"Unknown implementation: {self.implementation}")
     
-    def load_model_from_checkpoint(self, env, checkpoint_path: str = None, algorithm_config: dict = None, sb3_model_class: BaseAlgorithm = None):
+    def load_model_from_checkpoint(self, env, checkpoint_path: str = None, algorithm_config: dict = None, sb3_model_class: BaseAlgorithm = None, model_name: str = "final_model"):
         """
         Load a model from a checkpoint, creating a new model with the same parameters if needed.
         
@@ -58,20 +59,21 @@ class AlgoWrapper:
             checkpoint_path: Path to the checkpoint file
             algorithm_config: Algorithm configuration dictionary
             sb3_model_class: Stable Baselines3 model class
+            model_name: Name of the model file within the checkpoint directory (default: "final_model")
         """
         checkpoint_path = self.checkpoint_path if checkpoint_path is None else checkpoint_path
 
         print(f"working directory: {os.getcwd()}")
         print(f"absolute path of checkpoint: {os.path.abspath(checkpoint_path)}")
         
-        if not os.path.exists(checkpoint_path):
+        if not os.path.exists(checkpoint_path) and not os.path.exists(checkpoint_path + ".zip"):
             raise FileNotFoundError(f"Checkpoint not found at {checkpoint_path}")
             # Determine the model path based on whether the checkpoint_path ends with .zip
         # if checkpoint_path.endswith('.zip'):
         #     model_path = checkpoint_path
         # else:
         
-        model_path = os.path.join(checkpoint_path, "final_model")
+        model_path = os.path.join(checkpoint_path, model_name)
 
         sb3_model_class = self.get_sb3_class(self.algorithm)
         algorithm_config = self.config if algorithm_config is None else algorithm_config
@@ -110,6 +112,26 @@ class AlgoWrapper:
             raise
 
         return model
+
+    def load_opponent(self, opponent_spec: str, model_class: BaseAlgorithm):
+        """
+        Load an opponent (either a basic opponent or another model).
+
+        Args:
+            opponent_spec: Specification of the opponent, either "weak", "strong", or a checkpoint path.
+            model_class: Stable Baselines3 model class to use if loading from a checkpoint.
+
+        Returns:
+            An opponent instance.
+        """
+        if opponent_spec in ["weak", "strong"]:
+            return h_env.BasicOpponent(weak=(opponent_spec == "weak"))
+        else:
+            try:
+                return SelfPlayOpponent(model_class, opponent_spec)
+            except Exception as e:
+                print(f"Error loading opponent from {opponent_spec}: {e}")
+                raise
 
 
     def _create_sb3_model(self, env):

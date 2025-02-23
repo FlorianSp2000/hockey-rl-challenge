@@ -13,7 +13,7 @@ from gymnasium import spaces
 ENV_TYPES = {'subproc': SubprocVecEnv, 'dummy': DummyVecEnv}
 
 class HockeySB3Wrapper(gym.Wrapper):
-    def __init__(self, env, rank, opponent_type="weak", model_class=None, model_pool=None, change_sides=True):
+    def __init__(self, env, rank, opponent_type="weak", model_class=None, model_pool=None, change_sides=True, test_opponent=None):
         super().__init__(env) # Initialize the parent class with the environment
         # Define observation and action space
         self.observation_space = self.env.observation_space
@@ -24,12 +24,16 @@ class HockeySB3Wrapper(gym.Wrapper):
         self.change_sides = change_sides
         self.playing_as_agent2 = False
         # selfplay  
-        # self.opponent = h_env.BasicOpponent(weak=(opponent_type == "weak"))
         self.model_class = model_class
         self.model_pool = model_pool
         self.current_opponent_id = None
-        self.set_opponent(opponent_type)
-        print(f"self.opponent.weak: {self.opponent.weak}")
+        # USED FOR TESTING
+        if test_opponent:
+            self.opponent = test_opponent
+            self.current_opponent_id = "test_opponent"
+        else:
+            self.set_opponent(opponent_type)
+        print(f"self.opponent: {self.opponent}")
 
     def reset(self, seed=None, options=None):
         obs, info = self.env.reset() # left player
@@ -46,8 +50,6 @@ class HockeySB3Wrapper(gym.Wrapper):
         return obs, info
 
     def step(self, action):
-        # make sure action is of shape (4,)
-        # assert action.shape == (4,), f"Invalid action shape: {action.shape}"
         opponent_action = self.opponent.act(self.obs_opponent)
 
         if self.playing_as_agent2:

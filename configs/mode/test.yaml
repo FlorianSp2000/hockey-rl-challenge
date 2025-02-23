@@ -1,2 +1,12 @@
 name: test
-eval_interval: 1000
+n_test_episodes: 10 #25
+log_dir: logs/${algorithm.name}/sb3/${mode.name}
+tensorboard_log: ${mode.log_dir}
+# define expected number of steps for ERE buffer
+total_timesteps: 100000 #${mode.n_test_episodes * 250}
+
+change_sides: true
+render: false
+opponent_checkpoint:
+  load_from: null # models/run_2025-02-22_18-01-57
+  model_name: null # model_1150023

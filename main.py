@@ -29,14 +29,17 @@ def main(cfg: DictConfig):
             logger = create_logger(cfg, log_dir_datetimed)
             config["seed"] = cfg.seed[0]
             train.run(config, logger)
+            
     elif mode == "test":
+        logger = Logger(log_dir_datetimed, cfg) # We don't want to write the selfplay results into the potential checkpoint directory
         test.run(config, logger)
+
     elif mode == "selfplay":
         print("start selfplay")
         logger = Logger(log_dir_datetimed, cfg) # We don't want to write the selfplay results into the potential checkpoint directory
-        # logger = create_logger(cfg, log_dir_datetimed)
         config["seed"] = cfg.seed[0]
         selfplay.run(config, logger)
+
     elif mode == "hp_tuning":
         logger = create_logger(cfg, log_dir_datetimed)
         config["seed"] = cfg.seed[0]
