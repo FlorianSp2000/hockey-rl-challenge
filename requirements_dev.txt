@@ -1,3 +1,4 @@
 pytest
 seaborn
 tueplots
+imageio[ffmpeg]
