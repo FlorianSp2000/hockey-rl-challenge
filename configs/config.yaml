@@ -19,7 +19,7 @@ change_sides: True
 
 checkpoint:
   load_from: null #logs/SAC/sb3/train/run_2025-02-18_14-45-48_s42 # null # Set to path of checkpoint to load from
-  reset_num_timesteps: True  # Whether to reset the timestep counter when loading
+  reset_num_timesteps: False  # Whether to reset the timestep counter when loading
   model_name: null # Set to name of model to load from model pool
 
 

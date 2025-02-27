@@ -16,6 +16,11 @@ def run(config, logger):
     model_pool = ModelPool(
         pool_size=config['mode']['pool_size'],  # Adjust pool size as needed
         save_dir=logger.log_dir,
+        basic_opponents={'model_7100142_18-01-57': "logs/SAC/sb3/selfplay/run_2025-02-22_18-01-57/final_model.zip",
+                         'model_7773192_00-06-06': "logs/SAC/sb3/selfplay/run_2025-02-23_00-06-06/final_model.zip",
+                         "model_620403_10-00-00": "logs/SAC/sb3/selfplay/run_2025-02-24_10-00-00/run_2025-02-24_10-11-32/checkpoints/model_620403.zip",
+                         "model_2041326_02-16-37": "logs/SAC/sb3/selfplay/run_2025-02-24_02-14-00/run_2025-02-24_02-16-37/checkpoints/model_2041326.zip"
+                         },
         start_relative_strength=config['mode']['start_relative_strength'],
         curriculum_thresholds = config['mode']['curriculum'],
         game_decision_margins = config['mode']['game_decision_margin'],

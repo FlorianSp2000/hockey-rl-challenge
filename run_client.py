@@ -61,8 +61,15 @@ class HockeyAgent(Agent):
 class MinimalSACAgent(HockeyAgent):
     def __init__(self, weak: bool) -> None:
         super().__init__(weak)
-        self.model = SACERE.load(Path('').resolve() / Path('models\\run_2025-02-22_18-01-57\\model_6700134'))
-        print("Model loaded")
+        # self.model = SACERE.load(Path('').resolve() / Path('models\\run_2025-02-22_18-01-57\\final_model'))
+        # self.model = SACERE.load(Path('').resolve() / Path('models\\run_2025-02-24_02-16-37\\model_1240806'))
+        # self.model = SACERE.load(Path('').resolve() / Path('models\\run_2025-02-24_02-16-37\\model_2041326'))
+        self.model = SACERE.load(Path('').resolve() / Path('models\\run_2025-02-24_14-00-00\\model_818097'))
+        # self.model = SACERE.load(Path('').resolve() / Path('models\\run_2025-02-24_02-16-37\\model_3061989'))
+        # models/run_2025-02-24_10-00-00 checkpoint.model_name=model_1120728
+        
+        # self.model = SACERE.load(Path('').resolve() / Path('models\\run_2025-02-23_00-04-35\\model_4046868')) 
+        print("USING MINIMAL AGENT Model loaded")
 
     def get_step(self, observation: list[float]) -> list[float]:
         observation = np.array(observation, dtype=np.float32)
@@ -79,7 +86,9 @@ class SACAgent(Agent):
         super().__init__()
         self.env = HockeyEnv() # Environment to simulate environment state and get reward
         
-        self.model = SACERE.load(Path('').resolve() / Path('models\\run_2025-02-22_18-01-57\\model_3100062'))
+        # self.model = SACERE.load(Path('').resolve() / Path('models\\run_2025-02-24_02-16-37\\model_1240806')) 
+        # self.model = SACERE.load(Path('').resolve() / Path('models\\run_2025-02-23_00-04-35\\model_4046868')) 
+        # self.model = SACERE.load(Path('').resolve() / Path('models\\run_2025-02-22_18-01-57\\final_model'))
         print("Model loaded")
         # Initialize replay buffer if it doesn't exist
         if not hasattr(self.model, "replay_buffer") or self.model.replay_buffer is None:

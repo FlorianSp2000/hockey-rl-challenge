@@ -26,6 +26,7 @@ class AlgoWrapper:
         self.parallelize = config["parallelize"]
         
         self.checkpoint_path = config["checkpoint"]['load_from']
+        self.checkpoint_name = config["checkpoint"].get('model_name', 'final_model')
         # self.reset_num_timesteps = config["checkpoint"]["reset_num_timesteps"]
 
         # self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -43,7 +44,8 @@ class AlgoWrapper:
     def create_or_load_model(self, env):
         if self.implementation == "sb3":
             if self.checkpoint_path is not None:
-                return self.load_model_from_checkpoint(env)
+                model_name = self.checkpoint_name
+                return self.load_model_from_checkpoint(env, model_name=model_name)
             return self._create_sb3_model(env)
         elif self.implementation == "custom":
             return self._get_custom_model(env)

@@ -44,7 +44,7 @@ class ModelPool:
             self.models[id] = ModelRecord(
                 path=path,
                 win_rates={},
-                relative_strength=1100.0, # default value for external opponents
+                relative_strength=1350.0, # default value for external opponents
                 timesteps=0
             )
         # Initialize basic opponents with empty ModelRecord objects
@@ -79,8 +79,8 @@ class ModelPool:
             print(f"current_relative_strength {current_relative_strength}")
             if worst_model[1].relative_strength < current_relative_strength:
                 print(f"number of models before deletion: {len(self.models)}")
-                if os.path.exists(worst_model[1].path):
-                    os.remove(worst_model[1].path)
+                # if os.path.exists(worst_model[1].path): CAREFUL THIS DELETES PREVIOUS CHEKPOINTS!
+                #     os.remove(worst_model[1].path)
                 del self.models[worst_model[0]]
                 print(f"number of models before deletion: {len(self.models)}")
             else:
