@@ -4,10 +4,6 @@ from stable_baselines3 import SAC, TD3
 import os
 import glob
 
-def load_config(config_path):
-    with open(config_path, "r") as file:
-        return yaml.safe_load(file)
-
 
 def get_enumerated_path(base_path):
     directory, filename = os.path.split(base_path)
@@ -20,18 +16,6 @@ def get_enumerated_path(base_path):
         counter += 1
 
     return base_path
-
-def load_trained_model(model_path, config):
-    """Loads a trained model from file."""
-    if config["algorithm"] == "SAC":
-        model = SAC.load(model_path)
-    elif config["algorithm"] == "TD3":
-        model = TD3.load(model_path)
-    else:
-        raise ValueError(f"Unknown algorithm: {config['algorithm']}")
-    
-    return model
-
 
 def get_latest_run(log_dir):
     """Finds the most recent run directory inside log_dir."""
@@ -61,11 +45,3 @@ def load_latest_model(log_dir, config):
         print(f"⚠️ No previous runs found in {log_dir}")
     
     return None  # No model found
-
-# Example Usage
-# model = load_latest_model(config["log_dir"], config)
-# if model:
-#     print("✅ Model successfully loaded!")
-# else:
-#     print("❌ No previous model found. Starting training from scratch.")
-#     run(config)

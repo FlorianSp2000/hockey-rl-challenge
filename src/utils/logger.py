@@ -2,7 +2,6 @@
 import os
 import torch
 import multiprocessing
-import datetime
 from torch.utils.tensorboard import SummaryWriter
 from stable_baselines3.common.logger import Logger as SB3Logger
 from omegaconf import DictConfig, OmegaConf
@@ -14,9 +13,6 @@ class Logger:
 
         # Create a TensorBoard writer
         self.writer = SummaryWriter(self.log_dir)
-
-        # Create an SB3 logger that writes to the same directory
-        # self.sb3_logger = SB3Logger(folder=self.log_dir, output_formats=['tensorboard', 'stdout'])
         
         # Save HPs to YAML and TensorBoard
         self.log_hyperparams(config)
@@ -35,11 +31,6 @@ class Logger:
         """Saves HPs to a file for future reference"""
         with open(os.path.join(self.log_dir, "hyperparams.yaml"), "w") as f:
             OmegaConf.save(config, f)
-
-    # def _generate_run_id(self, base_log_dir):
-    #     """Generates a unique run ID (timestamped) to avoid overwriting logs."""
-    #     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    #     return f"run_{timestamp}"
 
     def close(self):
         self.writer.close()

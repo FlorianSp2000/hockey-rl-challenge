@@ -1,4 +1,9 @@
 /logs
+/older_logs
+# /data
+models/
+game_data/
+results/
 *.bat
 # Byte-compiled / optimized / DLL files
 __pycache__/
