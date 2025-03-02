@@ -24,14 +24,14 @@ The project uses a custom hockey environment built on the Gymnasium API (formerl
 - `TRAIN_SHOOTING`: Practice hitting a static puck into the goal
 - `TRAIN_DEFENSE`: Practice defending against incoming shots
 
+### Selfplay Framework
+The Selfplay Method uses an Elo System to sample opponents from an Opponent Pool. The core logic can be found in [`src/utils/selfplay_utils.py`](src/utils/selfplay_utils.py).
+
 ## Competition Setup 🏆
 Team name:
 PytorchPedalPushers-SAC
 
 - Competition server is running at: http://comprl.cs.uni-tuebingen.de
-
-### Selfplay Framework
-The Selfplay Method uses an Elo System to sample opponents from an Opponent Pool. The core logic can be found in [`src/utils/selfplay_utils.py`](src/utils/selfplay_utils.py).
 
 ## Getting Started 🚀
 
