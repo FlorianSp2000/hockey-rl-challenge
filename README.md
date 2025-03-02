@@ -31,7 +31,7 @@ PytorchPedalPushers-SAC
 - Competition server is running at: http://comprl.cs.uni-tuebingen.de
 
 ### Selfplay Framework
-The Selfplay Method uses an Elo System to sample opponents from an Opponent Pool. The core logic can be found it *src/utils/selfplay_utils.py*
+The Selfplay Method uses an Elo System to sample opponents from an Opponent Pool. The core logic can be found in [`src/utils/selfplay_utils.py`](src/utils/selfplay_utils.py).
 
 ## Getting Started 🚀
 
